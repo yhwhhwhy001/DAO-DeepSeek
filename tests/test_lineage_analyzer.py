@@ -1,4 +1,4 @@
-"""Tests for Lineage Analyzer."""
+"""谱系分析器的测试。"""
 from src.memory_engine import Memory, MemorySnapshot
 from src.lineage_analyzer import LineageAnalyzer
 

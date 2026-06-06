@@ -1,4 +1,4 @@
-"""Tests for Leaderboard."""
+"""排行榜的测试。"""
 from src.leaderboard import build_leaderboard, score_structure
 
 

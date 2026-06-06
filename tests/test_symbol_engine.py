@@ -1,4 +1,4 @@
-"""Tests for Symbol Engine."""
+"""符号引擎的测试。"""
 from src.symbol_engine import SymbolEngine, state_similarity, Symbol
 
 

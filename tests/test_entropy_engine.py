@@ -1,4 +1,4 @@
-"""Tests for Entropy Engine."""
+"""熵引擎的测试。"""
 import math
 from src.cell import Cell
 from src.grid import Grid

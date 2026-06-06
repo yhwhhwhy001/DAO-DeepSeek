@@ -1,4 +1,4 @@
-"""Tests for RuleSet."""
+"""规则集的测试。"""
 from src.ruleset import Rule, RuleSet, mutate_rule, mutate_ruleset, generate_random_ruleset, VALID_ACTIONS
 
 

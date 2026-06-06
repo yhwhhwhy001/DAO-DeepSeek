@@ -1,4 +1,4 @@
-"""Lineage Analyzer — generation stats, survival analysis, shape inheritance."""
+"""谱系分析器 —— 世代统计、生存分析、形状继承。"""
 from collections import defaultdict
 from src.memory_engine import Memory
 
@@ -15,7 +15,7 @@ class LineageAnalyzer:
                 "lifespan_trend": "insufficient_data",
             }
 
-        # Generation stats
+        # 世代统计
         gen_stats: dict[int, dict] = {}
         for m in all_mems:
             g = m.generation
@@ -33,13 +33,13 @@ class LineageAnalyzer:
             stats["mean_lifespan"] = sum(lifespans) / len(lifespans) if lifespans else 0
             del stats["lifespans"]
 
-        # Max depth
+        # 最大深度
         max_depth = max((m.generation + 1 for m in all_mems), default=0)
 
-        # Founder count
+        # 创始者计数
         founders = sum(1 for m in all_mems if m.generation == 0)
 
-        # Shape inheritance: which shape hashes appear across generations
+        # 形状继承：哪些形状哈希在跨代中出现
         shape_generations: dict[str, set] = defaultdict(set)
         shape_counts: dict[str, int] = defaultdict(int)
         for m in all_mems:
@@ -57,7 +57,7 @@ class LineageAnalyzer:
                     "structure_count": shape_counts[h],
                 }
 
-        # Lifespan trend
+        # 寿命趋势
         gen_means = [(g, stats["mean_lifespan"]) for g, stats in sorted(gen_stats.items())
                      if stats["mean_lifespan"] > 0]
         trend = "insufficient_data"

@@ -1,4 +1,4 @@
-"""Tests for Rule Evolution Tracker."""
+"""规则进化追踪器的测试。"""
 from src.ruleset import Rule, RuleSet
 from src.rule_evolution import RuleEvolutionTracker
 

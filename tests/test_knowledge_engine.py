@@ -1,4 +1,4 @@
-"""Tests for Knowledge Engine."""
+"""知识引擎的测试。"""
 from src.knowledge_engine import KnowledgeEngine, Knowledge
 
 

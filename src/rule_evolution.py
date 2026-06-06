@@ -1,4 +1,4 @@
-"""Rule Evolution Tracker -- tracks rule prevalence and survival correlations."""
+"""规则进化追踪器 —— 追踪规则普及度和生存相关性。"""
 from src.ruleset import RuleSet, Rule
 
 

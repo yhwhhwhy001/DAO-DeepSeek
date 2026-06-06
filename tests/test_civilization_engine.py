@@ -1,4 +1,4 @@
-"""Tests for Civilization Engine."""
+"""文明引擎的测试。"""
 from src.civilization_engine import CivilizationEngine, Civilization
 
 

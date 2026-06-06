@@ -1,4 +1,4 @@
-"""Tests for Condition Engine."""
+"""条件引擎的测试。"""
 from src.cell import Cell
 from src.grid import Grid
 from src.condition_engine import ConditionEngine, compute_state_vector, discretize_state

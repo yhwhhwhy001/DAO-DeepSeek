@@ -1,4 +1,4 @@
-"""Tests for Ecology Engine."""
+"""生态引擎的测试。"""
 from src.ecology_engine import EcologyEngine, classify_niche
 
 

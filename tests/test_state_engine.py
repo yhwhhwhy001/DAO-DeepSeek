@@ -1,4 +1,4 @@
-"""Tests for State Engine physics rules."""
+"""状态引擎物理规则的测试。"""
 from src.cell import Cell
 from src.grid import Grid
 from src.event_bus import EventBus, EventType

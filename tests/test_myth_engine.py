@@ -1,4 +1,4 @@
-"""Tests for Myth Engine."""
+"""神话引擎的测试。"""
 from src.myth_engine import MythEngine, HeroLineage
 
 

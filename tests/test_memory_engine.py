@@ -1,4 +1,4 @@
-"""Tests for Memory Engine."""
+"""记忆引擎的测试。"""
 from src.cell import Cell
 from src.grid import Grid
 from src.event_bus import EventBus, EventType

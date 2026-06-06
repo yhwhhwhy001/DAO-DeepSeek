@@ -1,4 +1,4 @@
-"""Tests for Life Detector."""
+"""生命检测器的测试。"""
 from src.life_detector import LifeDetector, compute_survival_score, compute_memory_score
 
 

@@ -1,4 +1,4 @@
-"""Tests for Cell dataclass."""
+"""Cell 数据类的测试。"""
 import uuid
 from src.cell import Cell
 

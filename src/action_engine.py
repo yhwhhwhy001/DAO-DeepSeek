@@ -1,4 +1,4 @@
-"""Action Engine — 13-action space, rule evaluation, and softmax selection."""
+"""动作引擎 —— 13 动作空间、规则评估与 softmax 选择。"""
 import random
 import math
 from src.ruleset import RuleSet

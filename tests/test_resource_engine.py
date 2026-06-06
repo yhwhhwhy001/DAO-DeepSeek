@@ -1,4 +1,4 @@
-"""Tests for Resource Engine."""
+"""资源引擎的测试。"""
 from src.resource_engine import ResourceEngine, absorb_remnant
 
 

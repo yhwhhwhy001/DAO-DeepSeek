@@ -1,4 +1,4 @@
-"""RuleSet — genetic if-then rules for cell decision-making."""
+"""规则集 —— 用于细胞决策的遗传 if-then 规则。"""
 import random
 from dataclasses import dataclass, field
 

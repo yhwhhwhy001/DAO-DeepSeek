@@ -1,4 +1,4 @@
-"""Tests for Pattern Hasher."""
+"""模式哈希器的测试。"""
 from src.pattern_hasher import PatternHasher, compute_shape_hash
 
 

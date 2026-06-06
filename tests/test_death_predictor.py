@@ -1,4 +1,4 @@
-"""Tests for Death Predictor."""
+"""死亡预测器的测试。"""
 from src.memory_engine import MemorySnapshot
 from src.death_predictor import DeathPredictor, extract_features
 

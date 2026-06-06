@@ -1,4 +1,4 @@
-"""Tests for World Engine."""
+"""世界引擎的测试。"""
 import yaml
 from pathlib import Path
 from src.world_engine import WorldEngine

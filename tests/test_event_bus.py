@@ -1,4 +1,4 @@
-"""Tests for EventBus."""
+"""EventBus 的测试。"""
 from src.event_bus import EventBus, EventType
 
 

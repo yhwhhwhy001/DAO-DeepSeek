@@ -1,4 +1,4 @@
-"""Death Predictor — Logistic Regression model for structure survival prediction."""
+"""死亡预测器 —— 用于结构生存预测的逻辑回归模型。"""
 import math
 import numpy as np
 from sklearn.linear_model import LogisticRegression
@@ -79,7 +79,7 @@ class DeathPredictor:
 
         classes = np.unique(y_array)
         if len(classes) < 2:
-            # Single-class data: set accuracy to majority proportion and skip fit
+            # 单类别数据：将准确率设为多数类比例并跳过拟合
             self.accuracy = 1.0
             self.is_trained = False
             self._feature_importances = [(name, 0.0) for name in FEATURE_NAMES]

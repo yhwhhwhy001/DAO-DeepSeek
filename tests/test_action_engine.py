@@ -1,4 +1,4 @@
-"""Tests for Action Engine."""
+"""动作引擎的测试。"""
 import random
 from src.action_engine import ActionEngine, VALID_ACTIONS, evaluate_rules, softmax_select
 from src.ruleset import Rule, RuleSet

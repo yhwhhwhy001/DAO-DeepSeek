@@ -1,4 +1,4 @@
-"""Tests for Language Engine."""
+"""语言引擎的测试。"""
 from src.language_engine import LanguageEngine, build_signal
 
 

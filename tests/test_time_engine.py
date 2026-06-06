@@ -1,4 +1,4 @@
-"""Tests for Time Engine."""
+"""时间引擎的测试。"""
 from src.event_bus import EventBus, EventType
 from src.time_engine import TimeEngine
 from src.state_engine import StateEngine, PhysicsConfig

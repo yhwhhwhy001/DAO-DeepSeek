@@ -1,4 +1,4 @@
-"""Condition Engine -- per-cell environment state vector computation."""
+"""条件引擎 —— 细胞级环境状态向量计算。"""
 from src.cell import Cell
 from src.grid import Grid
 

@@ -1,4 +1,4 @@
-"""Decision Engine — per-cell sense-decide-act-learn pipeline."""
+"""决策引擎 —— 细胞的感知-决策-行动-学习流水线。"""
 import random
 from dataclasses import dataclass
 from src.cell import Cell
@@ -140,15 +140,15 @@ class DecisionEngine:
         return {"cell_id": cell.id, "action": action, "state_key": state_key}
 
     def step_all(self, grid, bus) -> None:
-        """Run decision pipeline for all living cells."""
+        """对所有存活细胞运行决策流水线。"""
         for cell in list(grid.all_cells):
             if cell.id not in self.cells:
-                # New cell from injection -- give it a random ruleset
+                # 来自注入的新细胞 —— 赋予随机规则集
                 self.register_cell(cell.id, generate_random_ruleset(self._rng))
 
             dc = self.cells[cell.id]
 
-            # Determine structure membership
+            # 确定结构归属
             structure_size = 0
             structure_stable = 0
             if self._detector is not None:
@@ -160,7 +160,7 @@ class DecisionEngine:
 
             result = self.step_cell(cell, dc, structure_size, structure_stable)
 
-            # Execute actions that directly affect physics
+            # 执行直接影响物理的动作
             action = result["action"]
             if action in MOVE_DIRECTIONS:
                 dx, dy = MOVE_DIRECTIONS[action]
@@ -171,11 +171,10 @@ class DecisionEngine:
                     grid.place(cell)
                     cell.energy -= ACTION_COST.get(action, 0)
             elif action == "STAY":
-                pass  # no cost, no change
+                pass  # 无消耗，无变化
             elif action == "SIGNAL":
                 cell.energy -= ACTION_COST["SIGNAL"]
-            # SPLIT/MERGE_REQUEST/TYPE_SHIFT modulate physics
-            # (handled in state_engine via probabilities, but simplified here:
-            #  just pay the cost)
+            # SPLIT/MERGE_REQUEST/TYPE_SHIFT 调节物理行为
+            # (在 state_engine 中通过概率处理，但此处简化处理：仅支付能量消耗)
             elif action in ("SPLIT", "MERGE_REQUEST", "TYPE_SHIFT"):
                 cell.energy -= ACTION_COST.get(action, 0)

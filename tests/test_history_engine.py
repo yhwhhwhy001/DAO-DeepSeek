@@ -1,4 +1,4 @@
-"""Tests for History Engine."""
+"""历史引擎的测试。"""
 from src.history_engine import HistoryEngine, LineageHistory, HistoryEvent
 
 

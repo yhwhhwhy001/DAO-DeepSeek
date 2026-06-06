@@ -1,4 +1,4 @@
-"""Utility Engine — Q-table, SARSA update, reward computation, inheritance."""
+"""效用引擎 —— Q 表、SARSA 更新、奖励计算、继承。"""
 from collections import OrderedDict
 
 ALPHA = 0.1
