@@ -1,0 +1,26 @@
+experiment:
+  name: "default"
+  description: "Phase 0 baseline — primordial soup"
+
+world:
+  width: 80
+  height: 40
+  boundary: "toroidal"
+  seed: 42
+
+physics:
+  decay_rate: 1.0
+  drift_probability: 0.05
+  fission_threshold: 10.0
+  fusion_probability: 0.01
+  energy_input: 3
+  num_types: 4
+
+initial:
+  cell_count: 200
+  min_energy: 3.0
+  max_energy: 8.0
+
+output:
+  snapshot_interval: 100
+  export_dir: "data/runs"
