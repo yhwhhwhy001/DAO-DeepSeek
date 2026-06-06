@@ -21,6 +21,9 @@ from src.map_engine import MapEngine
 from src.resource_engine import ResourceEngine
 from src.ecology_engine import EcologyEngine
 from src.cli.renderer import Renderer
+from src.symbol_engine import SymbolEngine
+from src.knowledge_engine import KnowledgeEngine
+from src.language_engine import LanguageEngine
 
 
 def main():
@@ -41,6 +44,12 @@ def main():
     resource_engine = ResourceEngine()
     ecology_engine = EcologyEngine()
     ecology_data = {"nodes": 0, "edges": 0, "competition_pairs": 0, "mutualism_pairs": 0, "remnant_count": 0, "remnants": {}}
+
+    # Phase 6 engines
+    symbol_engine = SymbolEngine()
+    knowledge_engine = KnowledgeEngine()
+    language_engine = LanguageEngine()
+    cognition_data = {"symbols": 0, "knowledge": 0, "signals": 0, "cross_lineage_pct": 0, "top_symbol": "N/A"}
 
     # Phase 1
     detector = StructureDetector(world.grid, world.bus)
@@ -124,6 +133,37 @@ def main():
                 "competition_pairs": comps, "mutualism_pairs": muts,
                 "remnant_count": resource_engine.count,
                 "remnants": remnants_map,
+            })
+
+            # Cognition scan every 50 ticks
+            q_data = []
+            for dc in decision_engine.cells.values():
+                for sk, actions in dc.utility._q_table.items():
+                    for a, v in actions.items():
+                        if abs(v) > 0.1:
+                            q_data.append((sk, a, v))
+
+            symbols = symbol_engine.scan(q_data)
+
+            # Build transitions from Q-table access order
+            transitions = []
+            for dc in decision_engine.cells.values():
+                keys = list(dc.utility._q_table.keys())
+                for s in symbols:
+                    if s.centroid_state in keys:
+                        for s2 in symbols:
+                            if s2.centroid_state in keys and s.id != s2.id:
+                                transitions.append((s.id, s2.id))
+
+            knowledge = knowledge_engine.scan(transitions, {})
+
+            lang_stats = language_engine.get_stats()
+            cognition_data.update({
+                "symbols": len(symbols),
+                "knowledge": len(knowledge),
+                "signals": lang_stats["total_signals"],
+                "cross_lineage_pct": lang_stats["cross_lineage_pct"],
+                "top_symbol": lang_stats["top_symbol"],
             })
 
         # Decision stats every 20 ticks
@@ -224,6 +264,7 @@ def main():
         decision_stats=decision_stats,
         life_stats=life_stats,
         ecology_data=ecology_data,
+        cognition_data=cognition_data,
     )
 
     fps = 15
@@ -236,6 +277,7 @@ def main():
                 renderer._decision = decision_stats
                 renderer._life = life_stats
                 renderer._ecology = ecology_data
+                renderer._cog = cognition_data
                 renderer.display_tick(live)
                 time.sleep(1.0 / fps)
     except KeyboardInterrupt:
