@@ -1,7 +1,8 @@
-"""DAO Genesis — Phase 2 Memory Emergence."""
+"""DAO Genesis — Phase 3 Decision Emergence."""
 import sys
 import time
 import yaml
+import random
 from rich.live import Live
 from src.world_engine import WorldEngine
 from src.event_bus import EventType
@@ -12,10 +13,10 @@ from src.leaderboard import build_leaderboard
 from src.memory_engine import MemoryEngine
 from src.lineage_analyzer import LineageAnalyzer
 from src.death_predictor import DeathPredictor, extract_features
+from src.decision_engine import DecisionEngine
+from src.ruleset import generate_random_ruleset
+from src.rule_evolution import RuleEvolutionTracker
 from src.cli.renderer import Renderer
-
-LINEAGE_REPORT_INTERVAL = 100
-RETRAIN_INTERVAL = 20
 
 
 def main():
@@ -26,22 +27,52 @@ def main():
     with open(config_path) as f:
         config = yaml.safe_load(f)
 
-    print(f"DAO Genesis Phase 2 — {config['experiment']['name']}")
-    print(f"World: {config['world']['width']}x{config['world']['height']}, "
-          f"boundary={config['world']['boundary']}, seed={config['world']['seed']}")
+    print(f"DAO Genesis Phase 3 — {config['experiment']['name']}")
     print("Press Ctrl+C to stop.\n")
 
     world = WorldEngine(config)
 
+    # Phase 1
     detector = StructureDetector(world.grid, world.bus)
     pattern_hasher = PatternHasher()
-    num_types = config["physics"]["num_types"]
-    entropy = EntropyEngine(world.grid, world.bus, detector, num_types=num_types)
+    entropy = EntropyEngine(world.grid, world.bus, detector,
+                            num_types=config["physics"]["num_types"])
 
+    # Phase 2
     memory_engine = MemoryEngine(world.bus, detector)
     lineage_analyzer = LineageAnalyzer()
     death_predictor = DeathPredictor()
     lineage_data: dict = {}
+
+    # Phase 3
+    rng = random.Random(42)
+    decision_engine = DecisionEngine(world.grid, seed=42)
+    decision_engine._detector = detector
+    tracker = RuleEvolutionTracker()
+
+    # Register initial cells
+    for cell in list(world.grid.all_cells):
+        rs = generate_random_ruleset(rng)
+        decision_engine.register_cell(cell.id, rs)
+
+    # Wire decision engine to time engine
+    world.time_engine.decision_engine = decision_engine
+
+    # Subscribe to fission for inheritance
+    def on_fission(event):
+        decision_engine.inherit_on_fission(
+            event.data["parent_id"], event.data["child_id"], rng)
+
+    world.bus.subscribe(EventType.STRUCTURE_FISSION, on_fission)
+
+    # Remove dead cells from decision engine
+    def on_cell_destroyed(event):
+        decision_engine.remove_cell(event.data["cell_id"])
+
+    world.bus.subscribe(EventType.CELL_DESTROYED, on_cell_destroyed)
+
+    decision_stats = {"q_cells": 0, "non_stay_pct": 0,
+                      "top_action": "N/A", "top_rules": []}
 
     def on_tick_end_all(event):
         tick = event.data["tick"]
@@ -50,39 +81,34 @@ def main():
             if s.shape_hash:
                 pattern_hasher.register(s.shape_hash, tick, (0, 0))
 
-        if tick % LINEAGE_REPORT_INTERVAL == 0 and tick > 0:
-            active_mems = list(memory_engine.memories.values())
-            dead_mems = memory_engine.dead_memories
-            ld = lineage_analyzer.analyze(active_mems, dead_mems)
-            lineage_data.clear()
-            lineage_data.update(ld)
-            print(f"\n=== Lineage Report (tick {tick}) ===")
-            print(f"Generations: {len(ld.get('generations', {}))} | "
-                  f"Lineages: {ld.get('total_lineages', 0)} | "
-                  f"Max Depth: {ld.get('max_depth', 0)}")
-            gens = ld.get("generations", {})
-            for g in sorted(gens.keys()):
-                s = gens[g]
-                print(f"  gen={g}: mean={s['mean_lifespan']:.1f} max={s['max_lifespan']} n={s['count']}")
-            shapes = ld.get("shape_inheritance", {})
-            if shapes:
-                print("  Shape inheritance:")
-                for h, info in sorted(shapes.items(), key=lambda kv: kv[1]["generations"], reverse=True)[:3]:
-                    print(f"    {h[:8]}: {info['generations']} gens, {info['structure_count']} structs")
-            print(f"  Lifespan trend: {ld.get('lifespan_trend', '?')}")
+        # Decision stats every 20 ticks
+        if tick % 20 == 0:
+            action_counts = {}
+            for dc in decision_engine.cells.values():
+                action_counts[dc.last_action] = \
+                    action_counts.get(dc.last_action, 0) + 1
+            total = sum(action_counts.values())
+            non_stay = sum(v for k, v in action_counts.items()
+                           if k != "STAY")
+            q_cells = sum(1 for dc in decision_engine.cells.values()
+                          if len(dc.utility._q_table) > 0)
+            top_action = max(action_counts, key=action_counts.get) \
+                if action_counts else "N/A"
 
-        if tick % RETRAIN_INTERVAL == 0 and tick > 0:
-            X, y = [], []
-            for m in memory_engine.dead_memories + list(memory_engine.memories.values()):
-                if len(m.snapshots) < 10:
-                    continue
-                lifespan = (m.died_at or tick) - m.born_at
-                feats = extract_features(m.snapshots, age=lifespan, generation=m.generation,
-                                         parent_lifespan=0)
-                X.append(feats)
-                y.append(1 if m.died_at is not None else 0)
-            if len(X) >= 20:
-                death_predictor.train(X, y)
+            # Track rules
+            for cell in world.grid.all_cells:
+                if cell.id in decision_engine.cells:
+                    dc = decision_engine.cells[cell.id]
+                    tracker.record_ruleset(cell.id, dc.ruleset,
+                                           survived=cell.energy > 0)
+
+            decision_stats.update({
+                "q_cells": q_cells,
+                "non_stay_pct": non_stay / max(total, 1) * 100,
+                "top_action": top_action,
+                "top_rules": [r["signature"]
+                              for r in tracker.get_top_rules(3)],
+            })
 
     world.bus.subscribe(EventType.TICK_END, on_tick_end_all)
 
@@ -93,6 +119,7 @@ def main():
         leaderboard_fn=build_leaderboard,
         pattern_hasher=pattern_hasher,
         lineage_data=lineage_data,
+        decision_stats=decision_stats,
     )
 
     fps = 15
@@ -102,21 +129,18 @@ def main():
             while True:
                 world.time_engine.step()
                 renderer._lineage = lineage_data
+                renderer._decision = decision_stats
                 renderer.display_tick(live)
                 time.sleep(1.0 / fps)
     except KeyboardInterrupt:
         pass
 
     print(f"\nUniverse stopped at tick {world.time_engine.tick}")
-    print(f"Final: {world.grid.alive_count} cells, {world.grid.total_energy:.1f} energy")
-    print(f"Structures: {detector.active_count} total, {detector.stable_count} stable")
-    print(f"Memories: {len(memory_engine.memories)} active, {len(memory_engine.dead_memories)} archived")
-    if lineage_data:
-        print(f"Lineages: {lineage_data.get('total_lineages', 0)}, max depth: {lineage_data.get('max_depth', 0)}")
-    if death_predictor.is_trained:
-        print(f"Death Predictor: accuracy={death_predictor.accuracy:.2f}")
-        risks = death_predictor.top_risk_factors(3)
-        print(f"Top risks: {risks}")
+    print(f"Cells: {world.grid.alive_count}")
+    print(f"Decision cells: {len(decision_engine.cells)}")
+    stats = tracker.get_stats()
+    print(f"Rules tracked: {stats['total_rules']}")
+    print(f"Top rules: {tracker.get_top_rules(5)}")
 
 
 if __name__ == "__main__":

@@ -61,6 +61,7 @@ class DecisionEngine:
         self.condition = ConditionEngine()
         self.action_engine = ActionEngine()
         self._rng = random.Random(seed)
+        self._detector = None  # set externally
 
     def register_cell(self, cell_id: str, ruleset: RuleSet) -> DecidingCell:
         if cell_id in self.cells:
@@ -137,3 +138,44 @@ class DecisionEngine:
         dc.was_near_death = cell.energy < 0.5
 
         return {"cell_id": cell.id, "action": action, "state_key": state_key}
+
+    def step_all(self, grid, bus) -> None:
+        """Run decision pipeline for all living cells."""
+        for cell in list(grid.all_cells):
+            if cell.id not in self.cells:
+                # New cell from injection -- give it a random ruleset
+                self.register_cell(cell.id, generate_random_ruleset(self._rng))
+
+            dc = self.cells[cell.id]
+
+            # Determine structure membership
+            structure_size = 0
+            structure_stable = 0
+            if self._detector is not None:
+                for s in self._detector.structures:
+                    if cell.id in s.cells:
+                        structure_size = len(s.cells)
+                        structure_stable = 1 if s.status == "stable" else 0
+                        break
+
+            result = self.step_cell(cell, dc, structure_size, structure_stable)
+
+            # Execute actions that directly affect physics
+            action = result["action"]
+            if action in MOVE_DIRECTIONS:
+                dx, dy = MOVE_DIRECTIONS[action]
+                new_x, new_y = grid._resolve(cell.x + dx, cell.y + dy)
+                if new_x is not None and grid.is_empty(new_x, new_y):
+                    grid.remove(cell.x, cell.y)
+                    cell.x, cell.y = new_x, new_y
+                    grid.place(cell)
+                    cell.energy -= ACTION_COST.get(action, 0)
+            elif action == "STAY":
+                pass  # no cost, no change
+            elif action == "SIGNAL":
+                cell.energy -= ACTION_COST["SIGNAL"]
+            # SPLIT/MERGE_REQUEST/TYPE_SHIFT modulate physics
+            # (handled in state_engine via probabilities, but simplified here:
+            #  just pay the cost)
+            elif action in ("SPLIT", "MERGE_REQUEST", "TYPE_SHIFT"):
+                cell.energy -= ACTION_COST.get(action, 0)

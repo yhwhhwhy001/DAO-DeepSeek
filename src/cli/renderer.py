@@ -23,7 +23,8 @@ def make_grid_display(grid: Grid, width: int, height: int) -> str:
 class Renderer:
     def __init__(self, grid: Grid, bus: EventBus, config: dict,
                  detector=None, entropy_engine=None, leaderboard_fn=None,
-                 pattern_hasher=None, lineage_data: dict | None = None):
+                 pattern_hasher=None, lineage_data: dict | None = None,
+                 decision_stats: dict | None = None):
         self.grid = grid
         self.config = config
         self.console = Console()
@@ -32,6 +33,7 @@ class Renderer:
         self.leaderboard_fn = leaderboard_fn
         self.pattern_hasher = pattern_hasher
         self._lineage = lineage_data
+        self._decision = decision_stats
 
         self._tick: int = 0
         self._alive: int = 0
@@ -133,6 +135,18 @@ class Renderer:
                 )
             right_panels.append(Panel("\n".join(lb_lines), title="Leaderboard", border_style="magenta"))
 
+        # Decision panel
+        if self._decision:
+            ds = self._decision
+            dec_text = (
+                f"Q-cells: {ds.get('q_cells', 0)}  |  "
+                f"Active: {ds.get('non_stay_pct', 0):.0f}%\n"
+                f"Top action: {ds.get('top_action', 'N/A')}"
+            )
+            if ds.get('top_rules'):
+                dec_text += f"\nTop rule: {ds['top_rules'][0] if ds['top_rules'] else 'N/A'}"
+            right_panels.append(Panel(dec_text, title="Decision", border_style="green"))
+
         # Lineage panel
         if self._lineage and self._lineage.get("max_depth", 0) > 0:
             ld = self._lineage
@@ -169,6 +183,14 @@ class Renderer:
                 Layout(right_panels[0], name="r0", ratio=2),
                 Layout(right_panels[1], name="r1", ratio=3),
                 Layout(right_panels[2], name="r2", ratio=2),
+            )
+        elif len(right_panels) == 5:
+            right_layout.split_column(
+                Layout(right_panels[0], name="r0", ratio=2),
+                Layout(right_panels[1], name="r1", ratio=3),
+                Layout(right_panels[2], name="r2", ratio=1),
+                Layout(right_panels[3], name="r3", ratio=2),
+                Layout(right_panels[4], name="r4", ratio=2),
             )
         else:
             right_layout.split_column(
