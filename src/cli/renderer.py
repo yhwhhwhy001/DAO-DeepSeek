@@ -1,4 +1,4 @@
-"""CLI Renderer — Rich-based Phase 1 terminal display."""
+"""CLI 渲染器 — 基于 Rich 的第一阶段终端显示。"""
 from rich.live import Live
 from rich.panel import Panel
 from rich.layout import Layout
@@ -78,31 +78,31 @@ class Renderer:
         w = self.config["world"]
         layout = Layout()
 
-        # Header
-        header_text = f"DAO Genesis — Phase 1   Tick: {self._tick}"
+        # 头部
+        header_text = f"DAO 创世纪 — 阶段一   Tick: {self._tick}"
         layout.split_column(
             Layout(Panel(header_text, border_style="bold cyan"), name="header", size=2),
             Layout(name="main"),
             Layout(name="footer", size=3),
         )
 
-        # Main: left (grid) + right (panels)
+        # 主区域：左侧（网格）+ 右侧（面板）
         layout["main"].split_row(
             Layout(name="left", ratio=3),
             Layout(name="right", ratio=2),
         )
 
-        # Left: universe grid
+        # 左侧：宇宙网格
         remnants_dict = {}
         if self._ecology:
             remnants_dict = self._ecology.get("remnants", {})
         grid_str = make_grid_display(self.grid, w["width"], w["height"], remnants_dict)
-        layout["left"].update(Panel(grid_str, title="Universe", border_style="green"))
+        layout["left"].update(Panel(grid_str, title="宇宙", border_style="green"))
 
-        # Right: stacked panels (Entropy, Leaderboard, Events)
+        # 右侧：堆叠面板
         right_panels = []
 
-        # Entropy panel
+        # 熵面板
         if self.entropy and self.entropy.current_snapshot:
             snap = self.entropy.current_snapshot
             trend = self.entropy.current_trend
@@ -114,9 +114,9 @@ class Renderer:
                 f"Struct:  {snap['structure_entropy']:.2f} bits\n"
                 f"Trend:   [{style}]{trend}[/{style}]"
             )
-            right_panels.append(Panel(entropy_text, title="Entropy", border_style="blue"))
+            right_panels.append(Panel(entropy_text, title="熵", border_style="blue"))
 
-        # Leaderboard panel
+        # 排行榜面板
         if self.detector and self.leaderboard_fn:
             structs = self.detector.get_active()
             stable = self.detector.get_stable()
@@ -149,9 +149,9 @@ class Renderer:
                     f"{i}. {r['id']}  age={r['age']}  sz={r['size']}  "
                     f"hash={r.get('shape_hash','')[:6]}  score={r['score']:.2f}"
                 )
-            right_panels.append(Panel("\n".join(lb_lines), title="Leaderboard", border_style="magenta"))
+            right_panels.append(Panel("\n".join(lb_lines), title="排行榜", border_style="magenta"))
 
-        # Decision panel
+        # 决策面板
         if self._decision:
             ds = self._decision
             dec_text = (
@@ -161,9 +161,9 @@ class Renderer:
             )
             if ds.get('top_rules'):
                 dec_text += f"\nTop rule: {ds['top_rules'][0] if ds['top_rules'] else 'N/A'}"
-            right_panels.append(Panel(dec_text, title="Decision", border_style="green"))
+            right_panels.append(Panel(dec_text, title="决策", border_style="green"))
 
-        # Life panel
+        # 生命面板
         if self._life:
             ls = self._life
             proto = ls.get("proto_count", 0)
@@ -172,9 +172,9 @@ class Renderer:
             top = ls.get("top_lifeforms", [])
             for i, lf in enumerate(top[:3], 1):
                 life_text += f"\n{i}. {lf['id']}  score={lf['score']:.1f}  {lf['class']}"
-            right_panels.append(Panel(life_text, title="Life", border_style="bright_green"))
+            right_panels.append(Panel(life_text, title="生命", border_style="bright_green"))
 
-        # Ecology panel
+        # 生态面板
         if self._ecology:
             ed = self._ecology
             eco_text = f"Nodes: {ed.get('nodes', 0)}  |  Edges: {ed.get('edges', 0)}"
@@ -182,17 +182,17 @@ class Renderer:
             mutualists = ed.get("mutualism_pairs", 0)
             eco_text += f"\nCompetition: {competitors}  |  Mutualism: {mutualists}"
             eco_text += f"\nRemnants: {ed.get('remnant_count', 0)}"
-            right_panels.append(Panel(eco_text, title="Ecology", border_style="yellow"))
+            right_panels.append(Panel(eco_text, title="生态", border_style="yellow"))
 
-        # Cognition panel
+        # 认知面板
         if self._cog:
             cg = self._cog
             cog_text = f"Symbols: {cg.get('symbols', 0)}  |  Knowledge: {cg.get('knowledge', 0)}"
             cog_text += f"\nSignals: {cg.get('signals', 0)}  |  Cross-lin: {cg.get('cross_lineage_pct', 0):.0f}%"
             cog_text += f"\nTop symbol: {cg.get('top_symbol', 'N/A')}"
-            right_panels.append(Panel(cog_text, title="Cognition", border_style="bright_cyan"))
+            right_panels.append(Panel(cog_text, title="认知", border_style="bright_cyan"))
 
-        # Civilization panel
+        # 文明面板
         if self._civ:
             cv = self._civ
             civ_text = f"Active: {cv.get('active_civs', 0)}  |  Fallen: {cv.get('fallen_civs', 0)}"
@@ -202,9 +202,9 @@ class Renderer:
                 hero = cv.get('hero_narrative', '')
                 if hero:
                     civ_text += f"\nHero: {hero[:60]}..."
-            right_panels.append(Panel(civ_text, title="Civilization", border_style="bright_magenta"))
+            right_panels.append(Panel(civ_text, title="文明", border_style="bright_magenta"))
 
-        # Lineage panel
+        # 谱系面板
         if self._lineage and self._lineage.get("max_depth", 0) > 0:
             ld = self._lineage
             trend = ld.get("lifespan_trend", "?")
@@ -220,13 +220,13 @@ class Renderer:
                 lineage_text += "\nTop Shapes:"
                 for h, info in top_shapes:
                     lineage_text += f"\n  {h[:8]}: {info['generations']} gens"
-            right_panels.append(Panel(lineage_text.strip(), title="Lineage", border_style="cyan"))
+            right_panels.append(Panel(lineage_text.strip(), title="谱系", border_style="cyan"))
 
-        # Event log
-        events = "\n".join(self._events[-6:]) if self._events else "No events yet"
-        right_panels.append(Panel(events, title="Events", border_style="yellow"))
+        # 事件日志
+        events = "\n".join(self._events[-6:]) if self._events else "暂无事件"
+        right_panels.append(Panel(events, title="事件", border_style="yellow"))
 
-        # Layout right column
+        # 布局右侧列
         right_layout = Layout()
         if len(right_panels) == 1:
             right_layout.update(right_panels[0])
@@ -307,11 +307,11 @@ class Renderer:
             )
         layout["right"].update(right_layout)
 
-        # Footer
+        # 底部
         active = self.detector.active_count if self.detector else 0
         stable_c = self.detector.stable_count if self.detector else 0
-        footer_text = (f"Alive: {self._alive}  |  Energy: {self._energy:.1f}  |  "
-                       f"Structures: {active} ({stable_c} stable)")
+        footer_text = (f"存活: {self._alive}  |  能量: {self._energy:.1f}  |  "
+                       f"结构: {active} ({stable_c} 稳定)")
         layout["footer"].update(Panel(footer_text, border_style="dim cyan"))
 
         return layout

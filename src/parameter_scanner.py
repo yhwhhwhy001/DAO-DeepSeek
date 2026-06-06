@@ -1,4 +1,4 @@
-"""Parameter Scanner — finds interesting parameter regimes via coarse + fine search."""
+"""参数扫描器——通过粗扫描和精细扫描发现有趣的参数区间。"""
 import json
 import random
 from pathlib import Path
@@ -51,7 +51,7 @@ def compute_score(alive: int, stable: int, max_age: int, patterns: int) -> float
 
 def run_single(params: dict, seed: int, ticks: int) -> ScanResult:
     config = {
-        "experiment": {"name": "scan", "description": "param scan"},
+        "experiment": {"name": "scan", "description": "参数扫描"},
         "world": {"width": 40, "height": 20, "boundary": "toroidal", "seed": seed},
         "physics": {**params},
         "initial": {"cell_count": 100, "min_energy": 3.0, "max_energy": 8.0},

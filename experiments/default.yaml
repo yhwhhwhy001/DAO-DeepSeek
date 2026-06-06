@@ -1,6 +1,6 @@
 experiment:
   name: "default"
-  description: "Phase 0 baseline — primordial soup"
+  description: "Phase 0 基线——原始汤"
 
 world:
   width: 80

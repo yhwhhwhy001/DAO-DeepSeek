@@ -31,7 +31,7 @@ class TestTimeEngine:
         bus.subscribe_all(lambda e: events.append(e.type))
 
         engine.step()
-        # Order: TICK_START first, TICK_END last
+        # 顺序：TICK_START 在前，TICK_END 在后
         assert events[0] == EventType.TICK_START
         assert events[-1] == EventType.TICK_END
 

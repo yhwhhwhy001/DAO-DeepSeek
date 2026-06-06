@@ -113,7 +113,7 @@ class TestMemoryEngine:
         eng = MemoryEngine(bus, det)
 
         g.place(Cell(x=5, y=5, id="a", energy=5.0))
-        bus.tick = 5  # tick 5 triggers snapshot (5 % 5 == 0)
+        bus.tick = 5  # tick 5 触发快照 (5 % 5 == 0)
         bus.publish(EventType.TICK_END, {"tick": 5, "alive_count": 1, "total_energy": 5.0})
 
         sid = list(eng.memories.keys())[0]

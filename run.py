@@ -1,4 +1,4 @@
-"""DAO Genesis — Phase 3 Decision Emergence."""
+"""DAO 创世纪 — 第三阶段 决策涌现。"""
 import sys
 import time
 import yaml
@@ -38,42 +38,42 @@ def main():
     with open(config_path) as f:
         config = yaml.safe_load(f)
 
-    print(f"DAO Genesis Phase 3 — {config['experiment']['name']}")
-    print("Press Ctrl+C to stop.\n")
+    print(f"DAO 创世纪 第三阶段 — {config['experiment']['name']}")
+    print("按 Ctrl+C 停止。\n")
 
     world = WorldEngine(config)
 
-    # Phase 5 engines
+    # 第五阶段引擎
     map_engine = MapEngine(height=config["world"]["height"])
     resource_engine = ResourceEngine()
     ecology_engine = EcologyEngine()
     ecology_data = {"nodes": 0, "edges": 0, "competition_pairs": 0, "mutualism_pairs": 0, "remnant_count": 0, "remnants": {}}
 
-    # Phase 6 engines
+    # 第六阶段引擎
     symbol_engine = SymbolEngine()
     knowledge_engine = KnowledgeEngine()
     language_engine = LanguageEngine()
     cognition_data = {"symbols": 0, "knowledge": 0, "signals": 0, "cross_lineage_pct": 0, "top_symbol": "N/A"}
 
-    # Phase 7 engines
+    # 第七阶段引擎
     civilization_engine = CivilizationEngine(world.bus)
     history_engine = HistoryEngine()
     myth_engine = MythEngine()
     civilization_data = {"active_civs": 0, "fallen_civs": 0, "top_civ": None, "hero_narrative": ""}
 
-    # Phase 1
+    # 第一阶段
     detector = StructureDetector(world.grid, world.bus)
     pattern_hasher = PatternHasher()
     entropy = EntropyEngine(world.grid, world.bus, detector,
                             num_types=config["physics"]["num_types"])
 
-    # Phase 2
+    # 第二阶段
     memory_engine = MemoryEngine(world.bus, detector)
     lineage_analyzer = LineageAnalyzer()
     death_predictor = DeathPredictor()
     lineage_data: dict = {}
 
-    # Phase 3
+    # 第三阶段
     rng = random.Random(42)
     decision_engine = DecisionEngine(world.grid, seed=42)
     decision_engine._detector = detector
@@ -81,27 +81,27 @@ def main():
     life_detector = LifeDetector(world.bus)
     life_stats = {"proto_count": 0, "true_count": 0, "top_lifeforms": []}
 
-    # Register initial cells
+    # 注册初始细胞
     for cell in list(world.grid.all_cells):
         rs = generate_random_ruleset(rng)
         decision_engine.register_cell(cell.id, rs)
 
-    # Wire decision engine to time engine
+    # 将决策引擎连接到时间引擎
     world.time_engine.decision_engine = decision_engine
 
-    # Wire Phase 5 engines
+    # 连接第五阶段引擎
     world.state_engine.map_engine = map_engine
     world.state_engine.resource_engine = resource_engine
     world.time_engine.resource_engine = resource_engine
 
-    # Subscribe to fission for inheritance
+    # 订阅分裂事件以实现继承
     def on_fission(event):
         decision_engine.inherit_on_fission(
             event.data["parent_id"], event.data["child_id"], rng)
 
     world.bus.subscribe(EventType.STRUCTURE_FISSION, on_fission)
 
-    # Remove dead cells from decision engine
+    # 从决策引擎中移除死亡细胞
     def on_cell_destroyed(event):
         decision_engine.remove_cell(event.data["cell_id"])
 
@@ -122,7 +122,7 @@ def main():
             if s.shape_hash:
                 pattern_hasher.register(s.shape_hash, tick, (0, 0))
 
-        # Ecology scan every 50 ticks
+        # 每 50 tick 进行生态扫描
         if tick % 50 == 0:
             struct_dicts = []
             for s in detector.get_active():
@@ -145,7 +145,7 @@ def main():
                 "remnants": remnants_map,
             })
 
-            # Cognition scan every 50 ticks
+            # 每 50 tick 进行认知扫描
             q_data = []
             for dc in decision_engine.cells.values():
                 for sk, actions in dc.utility._q_table.items():
@@ -155,7 +155,7 @@ def main():
 
             symbols = symbol_engine.scan(q_data)
 
-            # Build transitions from Q-table access order
+            # 从 Q 表访问顺序构建转移
             transitions = []
             for dc in decision_engine.cells.values():
                 keys = list(dc.utility._q_table.keys())
@@ -176,9 +176,9 @@ def main():
                 "top_symbol": lang_stats["top_symbol"],
             })
 
-        # Civilization scan every 100 ticks
+        # 每 100 tick 进行文明扫描
         if tick % 100 == 0 and tick > 0:
-            # Build ecology network graph
+            # 构建生态网络图
             G = nx.Graph()
             for s in detector.get_active():
                 G.add_node(s.id)
@@ -189,7 +189,7 @@ def main():
                     # Check if structures are adjacent
                     s_cells = {(c.x, c.y) for c in world.grid.all_cells if c.id in s.cells}
                     s2_cells = {(c.x, c.y) for c in world.grid.all_cells if c.id in s2.cells}
-                    # Simple proximity check
+                    # 简单邻近性检查
                     close = False
                     for x, y in s_cells:
                         for dx in (-2, -1, 0, 1, 2):
@@ -209,18 +209,18 @@ def main():
             active = sum(1 for c in civilization_engine.civilizations if c.status != "fallen")
             fallen = sum(1 for c in civilization_engine.civilizations if c.status == "fallen")
 
-            # Find top civ
+            # 查找顶级文明
             top_civ = None
             for c in civilization_engine.civilizations:
                 if c.status != "fallen":
                     if top_civ is None or len(c.member_lineages) > len(top_civ.member_lineages):
                         top_civ = c
 
-            # Record history
+            # 记录历史
             for c in civilization_engine.civilizations:
                 history_engine.record_era(c.id, c.born_at, tick, c.era, len(c.member_lineages))
 
-            # Generate myth narrative for top civ
+            # 为顶级文明生成神话叙事
             hero_narrative = ""
             if top_civ:
                 myth_engine.generate_founder_narrative(
@@ -237,7 +237,7 @@ def main():
                 "hero_narrative": hero_narrative,
             })
 
-        # Decision stats every 20 ticks
+        # 每 20 tick 更新决策统计
         if tick % 20 == 0:
             action_counts = {}
             for dc in decision_engine.cells.values():
@@ -266,7 +266,7 @@ def main():
                               for r in tracker.get_top_rules(3)],
             })
 
-        # Life detection every 10 ticks
+        # 每 10 tick 进行生命检测
         if tick % 10 == 0:
             proto_count = 0
             true_count = 0
@@ -356,12 +356,12 @@ def main():
     except KeyboardInterrupt:
         pass
 
-    print(f"\nUniverse stopped at tick {world.time_engine.tick}")
-    print(f"Cells: {world.grid.alive_count}")
-    print(f"Decision cells: {len(decision_engine.cells)}")
+    print(f"\n宇宙停止于第 {world.time_engine.tick} 次 tick")
+    print(f"细胞数: {world.grid.alive_count}")
+    print(f"决策细胞数: {len(decision_engine.cells)}")
     stats = tracker.get_stats()
-    print(f"Rules tracked: {stats['total_rules']}")
-    print(f"Top rules: {tracker.get_top_rules(5)}")
+    print(f"追踪规则数: {stats['total_rules']}")
+    print(f"顶级规则: {tracker.get_top_rules(5)}")
 
 
 if __name__ == "__main__":

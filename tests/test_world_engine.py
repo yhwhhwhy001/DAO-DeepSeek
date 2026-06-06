@@ -7,7 +7,7 @@ from src.world_engine import WorldEngine
 CONFIG_YAML = """
 experiment:
   name: "test"
-  description: "test run"
+  description: "测试运行"
 
 world:
   width: 20
@@ -62,7 +62,7 @@ class TestWorldEngine:
         config = yaml.safe_load(CONFIG_YAML)
         world = WorldEngine(config)
         stats = world.run(5)
-        # Without energy input, energy should decline (decay)
+        # 无能量输入时，总能量应下降（衰减）
         assert stats[-1]["total_energy"] <= stats[0]["total_energy"]
 
     def test_load_from_yaml_file(self, tmp_path):

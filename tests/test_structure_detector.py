@@ -176,7 +176,7 @@ class TestStructureDetector:
         assert len(det.structures) == 1
         parent = det.structures[0]
 
-        # Split: move 2 cells far away
+        # 分裂：将 2 个细胞移到远处
         g.remove(5, 5)
         g.remove(5, 6)
         g.place(Cell(x=15, y=15, id="a"))

@@ -39,12 +39,12 @@ class TestDeathPredictor:
                 snaps = make_snapshots([(s, s*2) for s in range(10, 0, -1)], tick_start=i*10)
                 feats = extract_features(snaps, age=30, generation=1, parent_lifespan=25)
                 X.append(feats)
-                y.append(1)  # died
+                y.append(1)  # 已死亡
             else:
                 snaps = make_snapshots([(5, 10)] * 10, tick_start=i*10)
                 feats = extract_features(snaps, age=30, generation=1, parent_lifespan=25)
                 X.append(feats)
-                y.append(0)  # survived
+                y.append(0)  # 已存活
         dp.train(X, y)
         assert dp.is_trained is True
         assert dp.accuracy > 0.6
@@ -87,5 +87,5 @@ class TestDeathPredictor:
         dp.train(X, y)
         risks = dp.top_risk_factors(3)
         assert len(risks) == 3
-        # cell_count_trend should be top risk factor for declining vs stable
+        # cell_count_trend 应是下降 vs 稳定状态中的首要风险因子
         assert risks[0][0] == "cell_count_trend"

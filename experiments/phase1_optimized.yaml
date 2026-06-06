@@ -1,6 +1,6 @@
 experiment:
   name: "phase1-optimized"
-  description: "Phase 1 optimized parameters — low decay, moderate energy input"
+  description: "Phase 1 优化参数——低衰减、中等能量输入"
 
 world:
   width: 80
