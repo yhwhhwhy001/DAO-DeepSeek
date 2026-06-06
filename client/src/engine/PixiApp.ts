@@ -15,6 +15,7 @@ export class PixiApp {
   constructor(canvas: HTMLCanvasElement, width: number, height: number) {
     this.step = this.cellSize + this.gap;
     this.app = new Application();
+    console.log('[PixiApp] 开始初始化...', width, height);
 
     this.ready = this.app.init({
       canvas,
@@ -23,11 +24,15 @@ export class PixiApp {
       background: 0x0a0a1a,
       antialias: true,
     }).then(() => {
+      console.log('[PixiApp] init 完成');
       this.gridLayer = new Graphics();
       this.remnantLayer = new Container();
       this.cellLayer = new Container();
       this.app.stage.addChild(this.gridLayer, this.remnantLayer, this.cellLayer);
       this.drawGrid(width, height);
+      console.log('[PixiApp] 网格绘制完成');
+    }).catch((e) => {
+      console.error('[PixiApp] init 失败:', e);
     });
   }
 
@@ -45,7 +50,10 @@ export class PixiApp {
   }
 
   update(grid: { cells: any[]; remnants: any[] }) {
-    if (!this.cellLayer) return;
+    if (!this.cellLayer) {
+      console.warn('[PixiApp] update 被调用但 cellLayer 未就绪');
+      return;
+    }
     this.cellLayer.removeChildren();
     this.remnantLayer.removeChildren();
 
