@@ -1,0 +1,26 @@
+experiment:
+  name: "phase1-optimized"
+  description: "Phase 1 optimized parameters — low decay, moderate energy input"
+
+world:
+  width: 80
+  height: 40
+  boundary: "toroidal"
+  seed: 45
+
+physics:
+  decay_rate: 0.1
+  drift_probability: 0.1
+  fission_threshold: 10.0
+  fusion_probability: 0.01
+  energy_input: 10
+  num_types: 4
+
+initial:
+  cell_count: 200
+  min_energy: 3.0
+  max_energy: 8.0
+
+output:
+  snapshot_interval: 100
+  export_dir: "data/runs"
