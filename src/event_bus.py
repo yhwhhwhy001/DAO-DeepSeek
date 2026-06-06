@@ -10,6 +10,10 @@ class EventType(Enum):
     CELL_CREATED = auto()
     CELL_DESTROYED = auto()
     STATE_CHANGED = auto()
+    STRUCTURE_FORMED = auto()
+    STRUCTURE_LOST = auto()
+    STRUCTURE_STABLE = auto()
+    TREND_CHANGED = auto()
 
 
 @dataclass

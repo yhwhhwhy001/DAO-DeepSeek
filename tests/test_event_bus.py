@@ -43,6 +43,13 @@ class TestEventBus:
         bus.publish(EventType.TICK_END, {})
         assert types == [EventType.TICK_START, EventType.CELL_CREATED, EventType.TICK_END]
 
+    def test_phase1_event_types_work(self):
+        bus = EventBus()
+        received = []
+        bus.subscribe(EventType.STRUCTURE_FORMED, lambda e: received.append(e))
+        bus.publish(EventType.STRUCTURE_FORMED, {"structure_id": "s1", "component_id": "c1", "cell_count": 5})
+        assert len(received) == 1
+
     def test_event_inherits_bus_tick(self):
         bus = EventBus()
         bus.tick = 42
