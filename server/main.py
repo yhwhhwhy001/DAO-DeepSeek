@@ -214,19 +214,27 @@ async def _run_loop(ws: WebSocket):
     while True:
         try:
             if session.running and session.world:
-                # tps=0 → 极速模式，批量跑 50 tick 后发送一次
                 if session.tps == 0:
-                    batch = 50
+                    # 极速模式: 批量 50 tick，只发最后一次状态
                     state = None
-                    for _ in range(batch):
+                    for _ in range(50):
                         state = session.step()
                     if state:
+                        state["grid"] = {}  # 不发送网格数据
                         await ws.send_json(state)
                 elif session.tps >= 1000:
-                    # 高速模式，每 tick 计算但减少发送频率
+                    # 高速模式: 每 3 tick 发一次完整数据，其余只发统计
                     state = session.step()
-                    if session._tick % max(1, session.tps // 30) == 0:
+                    if session._tick % 3 == 0:
                         await ws.send_json(state)
+                    else:
+                        await ws.send_json({
+                            "type": "tick",
+                            "tick": session._tick,
+                            "grid": {},  # 空网格，前端复用上次数据
+                            "stats": state["stats"],
+                            "panels": state["panels"],
+                        })
                 else:
                     state = session.step()
                     await ws.send_json(state)

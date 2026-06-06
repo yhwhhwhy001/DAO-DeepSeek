@@ -26,7 +26,15 @@ export function useWebSocket() {
       };
       ws.onmessage = (e) => {
         const data = JSON.parse(e.data);
-        if (data.type === 'tick') setState(data);
+        if (data.type === 'tick') {
+          setState(prev => {
+            // 如果新数据没有网格，复用旧网格
+            if (!data.grid?.cells?.length && prev?.grid) {
+              return { ...data, grid: prev.grid };
+            }
+            return data;
+          });
+        }
       };
       ws.onclose = () => {
         setConnected(false);
