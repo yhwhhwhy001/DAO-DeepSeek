@@ -339,20 +339,24 @@ def main():
         civilization_data=civilization_data,
     )
 
-    fps = 15
+    fps = 200
+    # 每 N tick 刷新一次 CLI 显示（减少渲染开销）
+    render_interval = 10
+    tick_count = 0
     try:
         with Live(renderer.build_layout(), console=renderer.console,
-                  refresh_per_second=fps, screen=True) as live:
+                  refresh_per_second=20, screen=True) as live:
             while True:
                 world.time_engine.step()
-                renderer._lineage = lineage_data
-                renderer._decision = decision_stats
-                renderer._life = life_stats
-                renderer._ecology = ecology_data
-                renderer._cog = cognition_data
-                renderer._civ = civilization_data
-                renderer.display_tick(live)
-                time.sleep(1.0 / fps)
+                tick_count += 1
+                if tick_count % render_interval == 0:
+                    renderer._lineage = lineage_data
+                    renderer._decision = decision_stats
+                    renderer._life = life_stats
+                    renderer._ecology = ecology_data
+                    renderer._cog = cognition_data
+                    renderer._civ = civilization_data
+                    renderer.display_tick(live)
     except KeyboardInterrupt:
         pass
 

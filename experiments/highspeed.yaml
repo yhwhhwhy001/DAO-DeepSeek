@@ -1,0 +1,26 @@
+experiment:
+  name: "highspeed"
+  description: "高速模式——超高细胞密度、极低衰减、高能量注入"
+
+world:
+  width: 80
+  height: 40
+  boundary: "toroidal"
+  seed: 42
+
+physics:
+  decay_rate: 0.01
+  drift_probability: 0.15
+  fission_threshold: 6.0
+  fusion_probability: 0.03
+  energy_input: 50
+  num_types: 4
+
+initial:
+  cell_count: 2000
+  min_energy: 5.0
+  max_energy: 15.0
+
+output:
+  snapshot_interval: 100
+  export_dir: "data/runs"
