@@ -1,0 +1,26 @@
+experiment:
+  name: "web"
+  description: "Web 界面优化——适中密度、流畅渲染"
+
+world:
+  width: 80
+  height: 40
+  boundary: "toroidal"
+  seed: 42
+
+physics:
+  decay_rate: 0.02
+  drift_probability: 0.12
+  fission_threshold: 8.0
+  fusion_probability: 0.02
+  energy_input: 15
+  num_types: 4
+
+initial:
+  cell_count: 300
+  min_energy: 5.0
+  max_energy: 12.0
+
+output:
+  snapshot_interval: 100
+  export_dir: "data/runs"

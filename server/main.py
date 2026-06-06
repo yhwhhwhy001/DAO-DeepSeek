@@ -195,7 +195,7 @@ async def websocket_endpoint(ws: WebSocket):
         cmd = msg.get("type")
 
         if cmd == "start":
-            config = msg.get("config", "experiments/highspeed.yaml")
+            config = msg.get("config", "experiments/web.yaml")
             session.init(config)
             session.running = True
             asyncio.create_task(_run_loop(ws))

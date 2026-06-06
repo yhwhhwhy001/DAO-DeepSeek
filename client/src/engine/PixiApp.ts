@@ -4,41 +4,42 @@ const TYPE_COLORS = [0xffffff, 0xff4444, 0x44ff44, 0x4488ff];
 
 export class PixiApp {
   app!: Application;
-  cellLayer!: Container;
-  remnantLayer!: Container;
   gridLayer!: Graphics;
+  drawLayer!: Graphics;
   cellSize = 12;
   gap = 2;
   step: number;
   ready: Promise<void>;
+  _lastGridData: any = null;
+  _needsRedraw = false;
 
   constructor(canvas: HTMLCanvasElement, width: number, height: number) {
     this.step = this.cellSize + this.gap;
     this.app = new Application();
-    console.log('[PixiApp] 开始初始化...', width, height);
 
     this.ready = this.app.init({
       canvas,
       width: width * this.step,
       height: height * this.step,
       background: 0x0a0a1a,
-      antialias: true,
+      antialias: false,  // 关闭抗锯齿提升性能
     }).then(() => {
-      console.log('[PixiApp] init 完成');
       this.gridLayer = new Graphics();
-      this.remnantLayer = new Container();
-      this.cellLayer = new Container();
-      this.app.stage.addChild(this.gridLayer, this.remnantLayer, this.cellLayer);
+      this.drawLayer = new Graphics();
+      this.app.stage.addChild(this.gridLayer, this.drawLayer);
       this.drawGrid(width, height);
-      console.log('[PixiApp] 网格绘制完成');
-    }).catch((e) => {
-      console.error('[PixiApp] init 失败:', e);
+      this.app.ticker.maxFPS = 30;  // 限制 30fps
+      this.app.ticker.add(() => {
+        if (this._needsRedraw && this._lastGridData) {
+          this._drawCells(this._lastGridData);
+          this._needsRedraw = false;
+        }
+      });
     });
   }
 
   drawGrid(w: number, h: number) {
     const g = this.gridLayer;
-    g.clear();
     const midY = (h * this.step) / 2;
     for (let y = 0; y < h; y++) {
       g.rect(0, y * this.step, w * this.step, this.step)
@@ -50,32 +51,30 @@ export class PixiApp {
   }
 
   update(grid: { cells: number[][]; remnants: number[][] }) {
-    if (!this.cellLayer) {
-      console.warn('[PixiApp] update 被调用但 cellLayer 未就绪');
-      return;
-    }
-    this.cellLayer.removeChildren();
-    this.remnantLayer.removeChildren();
+    this._lastGridData = grid;
+    this._needsRedraw = true;
+  }
 
+  _drawCells(grid: { cells: number[][]; remnants: number[][] }) {
+    const g = this.drawLayer;
+    g.clear();
+
+    // 残骸
     for (const r of grid.remnants) {
-      const [x, y, _type, energy] = r;
-      const g = new Graphics();
-      g.circle(x * this.step + this.step / 2, y * this.step + this.step / 2, Math.max(1, energy * 0.8))
-       .fill({ color: 0x666666, alpha: 0.4 });
-      this.remnantLayer.addChild(g);
+      const [x, y] = r;
+      g.circle(x * this.step + this.step / 2, y * this.step + this.step / 2, 1.5)
+       .fill({ color: 0x666666, alpha: 0.3 });
     }
 
+    // 批量画细胞到同一个 Graphics —— 高效
     for (const c of grid.cells) {
       const [x, y, type, energy] = c;
-      const g = new Graphics();
       const cx = x * this.step + this.step / 2;
       const cy = y * this.step + this.step / 2;
       const color = TYPE_COLORS[type] ?? 0xffffff;
-      const r = Math.min(4 + energy * 0.15, 8);
+      const r = Math.min(3 + energy * 0.15, 7);
 
       g.circle(cx, cy, r).fill({ color, alpha: 0.85 });
-      if (r > 5) g.circle(cx, cy, r + 2).fill({ color, alpha: 0.12 });
-      this.cellLayer.addChild(g);
     }
   }
 }

@@ -22,7 +22,7 @@ export function useWebSocket() {
       ws.onopen = () => {
         setConnected(true);
         setError(null);
-        ws.send(JSON.stringify({ type: 'start', config: 'experiments/highspeed.yaml' }));
+        ws.send(JSON.stringify({ type: 'start', config: 'experiments/web.yaml' }));
       };
       ws.onmessage = (e) => {
         const data = JSON.parse(e.data);
