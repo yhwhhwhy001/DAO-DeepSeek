@@ -1,7 +1,7 @@
 """Resource Engine — energy remnants from dead cells."""
 from dataclasses import dataclass
 
-REMNANT_DECAY_RATE = 0.05
+REMNANT_DECAY_RATE = 0.01
 ABSORPTION_MATRIX = {
     0: {0: 1.0, 1: 0.3, 2: 0.3, 3: 0.3},
     1: {0: 0.7, 1: 0.7, 2: 0.7, 3: 0.7},

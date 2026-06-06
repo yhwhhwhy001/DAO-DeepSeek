@@ -36,7 +36,7 @@ class TestResourceEngine:
 
     def test_decay_removes_expired(self):
         eng = ResourceEngine()
-        eng.create(5, 10, energy=0.04, remnant_type=0)
+        eng.create(5, 10, energy=0.008, remnant_type=0)
         eng.decay_all()
         assert eng.get(5, 10) is None
 
