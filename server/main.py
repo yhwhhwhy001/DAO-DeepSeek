@@ -193,21 +193,26 @@ async def websocket_endpoint(ws: WebSocket):
     while True:
         msg = await ws.receive_json()
         cmd = msg.get("type")
+        print(f"[WS] 收到: {cmd}", flush=True)
 
         if cmd == "start":
             config = msg.get("config", "experiments/web.yaml")
             session.init(config)
             session.running = True
+            print(f"[WS] 仿真启动: {config}", flush=True)
             asyncio.create_task(_run_loop(ws))
 
         elif cmd == "pause":
             session.running = False
+            print(f"[WS] 已暂停", flush=True)
 
         elif cmd == "resume":
             session.running = True
+            print(f"[WS] 已恢复", flush=True)
 
         elif cmd == "set_speed":
             session.tps = msg.get("tps", 60)
+            print(f"[WS] 速度设为 tps={session.tps}", flush=True)
 
 
 async def _run_loop(ws: WebSocket):

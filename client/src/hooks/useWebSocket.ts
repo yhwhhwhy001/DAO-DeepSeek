@@ -50,9 +50,9 @@ export function useWebSocket() {
     }
   }, []);
 
-  const pause = () => wsRef.current?.send(JSON.stringify({ type: 'pause' }));
-  const resume = () => wsRef.current?.send(JSON.stringify({ type: 'resume' }));
-  const setSpeed = (tps: number) => wsRef.current?.send(JSON.stringify({ type: 'set_speed', tps }));
+  const pause = () => { console.log('[btn] pause'); wsRef.current?.send(JSON.stringify({ type: 'pause' })); };
+  const resume = () => { console.log('[btn] resume'); wsRef.current?.send(JSON.stringify({ type: 'resume' })); };
+  const setSpeed = (tps: number) => { console.log('[btn] speed', tps); wsRef.current?.send(JSON.stringify({ type: 'set_speed', tps })); };
 
   return { state, connected, error, connect, pause, resume, setSpeed };
 }
