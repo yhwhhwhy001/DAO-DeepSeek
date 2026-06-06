@@ -1,4 +1,4 @@
-export default function HUDOverlay({ player, onEquipSkill }: { player: any; onEquipSkill: (name: string) => void }) {
+export default function HUDOverlay({ player, beastCount, onEquipSkill }: { player: any; beastCount: number; onEquipSkill: (name: string) => void }) {
   if (!player) return null;
   const realmColors: Record<string,string> = {"练气":"#aaa","筑基":"#44ff44","金丹":"#ffd700","元婴":"#ff44ff","化神":"#ff6644","渡劫":"#ff2222"};
   const color = realmColors[player.realm] || '#fff';
@@ -14,6 +14,7 @@ export default function HUDOverlay({ player, onEquipSkill }: { player: any; onEq
         <span>劫难: {Math.round(player.realm_index * 10)}%</span>
         <span>丹药: {player.herbs}</span>
         {player.shield_ticks > 0 && <span style={{color:'#44aaff'}}>护体: {player.shield_ticks}t</span>}
+        {beastCount > 0 && <span style={{color:'#ff4444'}}>妖兽: {beastCount}</span>}
         <span style={{color:'#888'}}>#{player.reincarnation}</span>
       </div>
       <div style={{ display:'flex', gap:6, marginTop:3, alignItems:'center' }}>

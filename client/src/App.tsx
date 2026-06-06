@@ -50,7 +50,7 @@ export default function App() {
       )}
       <div style={{ display:'flex', flex:1, overflow:'hidden', position:'relative' }}>
         <GameCanvas state={state} />
-        {hudMode && <HUDOverlay player={player} onEquipSkill={equipSkill} />}
+        {hudMode && <HUDOverlay player={player} beastCount={state?.grid?.beasts?.length ?? 0} onEquipSkill={equipSkill} />}
         {hudMode && <SpellBar castSpell={spellWithFeedback} player={player} />}
         {toast && (
           <div style={{ position:'absolute', top:'40%', left:'50%', transform:'translate(-50%,-50%)',

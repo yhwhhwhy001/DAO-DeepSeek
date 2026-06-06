@@ -79,7 +79,7 @@ export class PixiApp {
     for (let y = 0; y <= h; y++) g.moveTo(0, y * this.step).lineTo(w * this.step, y * this.step).stroke();
   }
 
-  update(grid: { cells: number[][]; remnants: number[][] }) {
+  update(grid: { cells: number[][]; remnants: number[][]; beasts?: any[] }) {
     this._lastGridData = grid;
     this._needsRedraw = true;
   }
@@ -100,7 +100,7 @@ export class PixiApp {
     }
   }
 
-  _drawCells(grid: { cells: number[][]; remnants: number[][] }) {
+  _drawCells(grid: { cells: number[][]; remnants: number[][]; beasts?: any[] }) {
     const g = this.drawLayer;
     g.clear();
 
@@ -109,9 +109,25 @@ export class PixiApp {
       const [x, y] = r;
       const cx = x * this.step + this.step / 2 - this.cameraX;
       const cy = y * this.step + this.step / 2 - this.cameraY;
-      // 十字碎片
       g.moveTo(cx - 2, cy).lineTo(cx + 2, cy).stroke({ width: 0.8, color: 0x666666, alpha: 0.3 });
       g.moveTo(cx, cy - 2).lineTo(cx, cy + 2).stroke({ width: 0.8, color: 0x666666, alpha: 0.3 });
+    }
+
+    // 妖兽：红色脉冲三角标记
+    if (grid.beasts) {
+      for (const b of grid.beasts) {
+        const sx = b.x * this.step + this.step / 2 - this.cameraX;
+        const sy = b.y * this.step + this.step / 2 - this.cameraY;
+        const pulse = Math.sin(this._pulseTick * 0.15) * 0.3 + 0.7;
+        // 索敌范围半透明圈
+        g.circle(sx, sy, b.aggro_range * this.step * 0.5).fill({ color: 0xff0000, alpha: 0.04 });
+        // 本体：红色三角
+        const r = 7;
+        g.moveTo(sx, sy - r).lineTo(sx + r, sy + r * 0.6).lineTo(sx - r, sy + r * 0.6).closePath()
+         .fill({ color: 0xff2222, alpha: pulse });
+        // 眼睛：白色小点
+        g.circle(sx, sy - 1, 2).fill({ color: 0xffffff, alpha: 0.8 });
+      }
     }
 
     for (const c of grid.cells) {

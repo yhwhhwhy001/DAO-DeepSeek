@@ -24,6 +24,7 @@ from src.knowledge_engine import KnowledgeEngine
 from src.language_engine import LanguageEngine
 from src.civilization_engine import CivilizationEngine
 from src.cultivator import Cultivator, SPELL_COSTS
+from src.beast_engine import BeastEngine
 from src.history_engine import HistoryEngine
 from src.myth_engine import MythEngine
 
@@ -89,6 +90,7 @@ class GameSession:
         self.world.state_engine.map_engine = self.map_engine
         self.world.state_engine.resource_engine = self.resource
         self.world.time_engine.resource_engine = self.resource
+        self.beast_engine = BeastEngine(self.world.grid, seed=42)
 
         from src.cell import Cell
         pos = self.world.grid.random_empty_position()
@@ -133,6 +135,30 @@ class GameSession:
                 }
             else:
                 self.player = None
+
+        # 妖兽阶段
+        px = None
+        py = None
+        if self.player:
+            pc = self.world.grid.get_by_id(self.player.cell_id)
+            if pc:
+                px, py = pc.x, pc.y
+        beast_events = self.beast_engine.tick(px, py)
+        # 处理妖兽攻击
+        for evt in beast_events:
+            if evt["type"] == "beast_attack" and pc:
+                dmg = evt["damage"]
+                if self.player.shield_ticks > 0:
+                    dmg *= 0.5
+                buffs = self.player.get_skill_buffs()
+                dmg *= (1 - buffs["damage_reduce"])
+                pc.energy -= dmg
+                self.player.total_kills += 0  # 被攻击不算击杀
+                # 击杀妖兽：如果玩家灵力够高，自动反击
+                if pc.energy > dmg * 3:
+                    if self.beast_engine.damage_beast(evt["id"], pc.energy * 0.1):
+                        self.player.total_kills += 1
+                        pc.energy += 5  # 击杀奖励
 
         # 决策阶段
         self.decision.step_all(self.world.grid, self.world.bus)
@@ -216,12 +242,14 @@ class GameSession:
             "type": "tick",
             "tick": self._tick,
             "grid": {"width": g.width, "height": g.height,
-                     "cells": cells, "remnants": remnants},
+                     "cells": cells, "remnants": remnants,
+                     "beasts": self.beast_engine.get_all_data()},
             "stats": {"alive": g.alive_count, "energy": round(g.total_energy, 1),
                       "structures": self.detector.active_count,
                       "stable": self.detector.stable_count,
                       "lifeforms": len(lifeforms)},
             "player": player_data,
+            "beasts": self.beast_engine.get_all_data(),
             "panels": {
                 "entropy": entropy_data,
                 "leaderboard": leaderboard_data,
