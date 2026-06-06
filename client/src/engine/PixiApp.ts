@@ -90,10 +90,10 @@ export class PixiApp {
       const sy = y * this.step + this.step / 2 - this.cameraY;
       const pulse = Math.sin(this._pulseTick * 0.1) * 0.2 + 0.6;
       // 外层光环
-      g.circle(sx, sy, 14).fill({ color: 0xffd700, alpha: pulse * 0.25 });
-      g.circle(sx, sy, 9).fill({ color: 0xffd700, alpha: pulse * 0.5 });
+      g.circle(sx, sy, 18).fill({ color: 0xffd700, alpha: pulse * 0.25 });
+      g.circle(sx, sy, 12).fill({ color: 0xffd700, alpha: pulse * 0.5 });
       // 内核（最高亮）
-      g.circle(sx, sy, 5).fill({ color: 0xffffff, alpha: 0.9 });
+      g.circle(sx, sy, 7).fill({ color: 0xffffff, alpha: 0.9 });
     }
   }
 
@@ -113,7 +113,7 @@ export class PixiApp {
       const sx = x * this.step + this.step / 2 - this.cameraX;
       const sy = y * this.step + this.step / 2 - this.cameraY;
       const color = TYPE_COLORS[type] ?? 0xffffff;
-      const r = isPlayer ? 6 : Math.min(3 + energy * 0.15, 7);
+      const r = isPlayer ? 8 : Math.min(3 + energy * 0.15, 7);
 
       g.circle(sx, sy, r).fill({ color: isPlayer ? 0xffd700 : color, alpha: 0.85 });
     }

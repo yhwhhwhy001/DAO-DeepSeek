@@ -125,6 +125,7 @@ class GameSession:
                     "realm": self.player.realm.name,
                     "realm_index": self.player._realm_index,
                     "skills": self.player.skills,
+                    "discovered_skills": self.player.discovered_skills,
                     "herbs": self.player.herbs,
                     "shield_ticks": self.player.shield_ticks,
                     "reincarnation": self.player.reincarnation_count,
@@ -165,7 +166,14 @@ class GameSession:
                         for s2 in symbols:
                             if s.id != s2.id and s2.state_keys & keys:
                                 transitions.append((s.id, s2.id))
-            self.knowledge_engine.scan(transitions, {})
+            new_knowledge = self.knowledge_engine.scan(transitions, {})
+            # 功法发现
+            if self.player and new_knowledge:
+                from src.cultivator import discover_skill_from_knowledge
+                for k in new_knowledge:
+                    skill = discover_skill_from_knowledge(k.antecedent, k.consequent)
+                    if skill and skill not in self.player.discovered_skills and len(self.player.discovered_skills) < 7:
+                        self.player.discovered_skills.append(skill)
 
         entropy_data = None
         if self.entropy.current_snapshot:
@@ -285,6 +293,10 @@ async def websocket_endpoint(ws: WebSocket):
                                     session.world.grid.remove(cell.x, cell.y)
                                     cell.x, cell.y = empty
                                     session.world.grid.place(cell)
+
+        elif cmd == "player_equip_skill":
+            if session.player:
+                session.player.equip_skill(msg.get("skill", ""))
 
         elif cmd == "player_reincarnate":
             if session.player:

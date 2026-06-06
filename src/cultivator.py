@@ -1,4 +1,4 @@
-"""修士引擎 —— 境界、法术、突破、轮回"""
+"""修士引擎 —— 境界、法术、突破、轮回、功法"""
 import random
 from dataclasses import dataclass
 
@@ -11,6 +11,16 @@ REALMS = [
     {"name": "化神", "min_energy": 100, "tribulation": 0.40, "max_skills": 3},
     {"name": "渡劫", "min_energy": 200, "tribulation": 0.50, "max_skills": 4},
 ]
+
+SKILL_PATTERNS = {
+    "金灵诀":   {"desc": "type=0 残骸吸收 +50%",   "absorb_bonus": {0: 0.5},  "move_discount": 0, "damage_reduce": 0},
+    "木灵诀":   {"desc": "type=1 残骸吸收 +50%",   "absorb_bonus": {1: 0.5},  "move_discount": 0, "damage_reduce": 0},
+    "水灵诀":   {"desc": "type=2 残骸吸收 +50%",   "absorb_bonus": {2: 0.5},  "move_discount": 0, "damage_reduce": 0},
+    "火灵诀":   {"desc": "type=3 残骸吸收 +50%",   "absorb_bonus": {3: 0.5},  "move_discount": 0, "damage_reduce": 0},
+    "混元诀":   {"desc": "全类型吸收 +20%",         "absorb_bonus": {0:0.2,1:0.2,2:0.2,3:0.2}, "move_discount": 0, "damage_reduce": 0},
+    "遁法真解": {"desc": "移动消耗 -50%",           "absorb_bonus": {},         "move_discount": 0.5, "damage_reduce": 0},
+    "不灭金身": {"desc": "伤害减免 30%",             "absorb_bonus": {},         "move_discount": 0, "damage_reduce": 0.3},
+}
 
 
 @dataclass
@@ -27,7 +37,8 @@ class Cultivator:
         self.energy = 10.0
         self.max_energy = 10.0
         self._realm_index = 0
-        self.skills: list[str] = []
+        self.skills: list[str] = []          # 已装备功法
+        self.discovered_skills: list[str] = []  # 已发现可装备功法
         self.shield_ticks = 0
         self.herbs = 0
         self.reincarnation_count = 0
@@ -58,16 +69,60 @@ class Cultivator:
     def try_breakthrough(self) -> bool:
         return breakthrough(self)
 
+    def equip_skill(self, name: str) -> bool:
+        if name not in self.discovered_skills:
+            return False
+        if name in self.skills:
+            return False
+        if len(self.skills) >= self.max_skills:
+            return False
+        self.skills.append(name)
+        return True
+
+    def get_skill_buffs(self):
+        absorb: dict[int, float] = {}
+        move_discount = 0.0
+        damage_reduce = 0.0
+        for skill_name in self.skills:
+            p = SKILL_PATTERNS.get(skill_name, {})
+            for t, v in p.get("absorb_bonus", {}).items():
+                absorb[t] = absorb.get(t, 0) + v
+            move_discount += p.get("move_discount", 0)
+            damage_reduce += p.get("damage_reduce", 0)
+        return {"absorb_bonus": absorb, "move_discount": move_discount, "damage_reduce": damage_reduce}
+
     def reincarnate(self, new_cell_id: str) -> "Cultivator":
         cv = Cultivator(new_cell_id)
         cv.energy = self.energy * 0.3 + 5.0
         cv.max_energy = cv.energy
         cv.skills = list(self.skills)
+        cv.discovered_skills = list(self.discovered_skills)
         cv.reincarnation_count = self.reincarnation_count + 1
         cv.max_realm_reached = max(self._realm_index, self.max_realm_reached)
         cv.total_kills = self.total_kills
         cv.total_energy_absorbed = self.total_energy_absorbed
         return cv
+
+
+def discover_skill_from_knowledge(knowledge_antecedent: str, knowledge_consequent: str) -> str | None:
+    """根据 Knowledge 的 antecedent/consequent 符号名尝试发现功法"""
+    import random as _random
+    candidates = []
+    combined = (knowledge_antecedent + knowledge_consequent).lower()
+    if "0" in knowledge_antecedent or "type" in combined[:10]:
+        candidates.append("金灵诀")
+    if "1" in knowledge_antecedent:
+        candidates.append("木灵诀")
+    if "2" in knowledge_antecedent:
+        candidates.append("水灵诀")
+    if "3" in knowledge_antecedent:
+        candidates.append("火灵诀")
+    candidates.append("混元诀")  # 总是可能发现
+    if _random.random() < 0.5:
+        candidates.append("遁法真解")
+    if _random.random() < 0.3:
+        candidates.append("不灭金身")
+    return _random.choice(candidates) if candidates else None
 
 
 def breakthrough(cv: Cultivator, force_success=False, force_failure=False) -> bool:

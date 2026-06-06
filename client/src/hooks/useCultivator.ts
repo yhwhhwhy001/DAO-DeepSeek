@@ -2,7 +2,8 @@ import { useState, useCallback } from 'react';
 
 export interface PlayerState {
   energy: number; max_energy: number; realm: string; realm_index: number;
-  skills: string[]; herbs: number; shield_ticks: number; reincarnation: number; cell_id: string;
+  skills: string[]; discovered_skills: string[]; herbs: number;
+  shield_ticks: number; reincarnation: number; cell_id: string;
 }
 
 export function useCultivator(sendMsg: (msg: object) => void) {
@@ -14,7 +15,6 @@ export function useCultivator(sendMsg: (msg: object) => void) {
       setPlayer(data.player);
       setDeadStats(null);
     } else if (player && !data.player) {
-      // Player just died
       setDeadStats({ ...player, energy_kept: player.energy * 0.3 });
       setPlayer(null);
     }
@@ -28,10 +28,14 @@ export function useCultivator(sendMsg: (msg: object) => void) {
     sendMsg({ type: 'player_spell', spell });
   }, [sendMsg]);
 
+  const equipSkill = useCallback((skill: string) => {
+    sendMsg({ type: 'player_equip_skill', skill });
+  }, [sendMsg]);
+
   const reincarnate = useCallback(() => {
     sendMsg({ type: 'player_reincarnate' });
     setDeadStats(null);
   }, [sendMsg]);
 
-  return { player, deadStats, updateFromTick, moveTo, castSpell, reincarnate };
+  return { player, deadStats, updateFromTick, moveTo, castSpell, equipSkill, reincarnate };
 }

@@ -10,7 +10,7 @@ import ReincarnationModal from './components/ReincarnationModal';
 
 export default function App() {
   const { state, connected, error, connect, pause, resume, setSpeed, sendMsg } = useWebSocket();
-  const { player, deadStats, updateFromTick, moveTo, castSpell, reincarnate } = useCultivator(sendMsg);
+  const { player, deadStats, updateFromTick, moveTo, castSpell, equipSkill, reincarnate } = useCultivator(sendMsg);
   const [hudMode, setHudMode] = useState(true);
   const [toast, setToast] = useState<string | null>(null);
 
@@ -50,7 +50,7 @@ export default function App() {
       )}
       <div style={{ display:'flex', flex:1, overflow:'hidden', position:'relative' }}>
         <GameCanvas state={state} />
-        {hudMode && <HUDOverlay player={player} />}
+        {hudMode && <HUDOverlay player={player} onEquipSkill={equipSkill} />}
         {hudMode && <SpellBar castSpell={spellWithFeedback} player={player} />}
         {toast && (
           <div style={{ position:'absolute', top:'40%', left:'50%', transform:'translate(-50%,-50%)',
