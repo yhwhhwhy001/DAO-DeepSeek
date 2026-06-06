@@ -139,11 +139,13 @@ class DecisionEngine:
 
         return {"cell_id": cell.id, "action": action, "state_key": state_key}
 
-    def step_all(self, grid, bus) -> None:
+    def step_all(self, grid, bus, exclude_ids: set[str] | None = None) -> None:
         """对所有存活细胞运行决策流水线。"""
+        exclude = exclude_ids or set()
         for cell in list(grid.all_cells):
+            if cell.id in exclude:
+                continue
             if cell.id not in self.cells:
-                # 来自注入的新细胞 —— 赋予随机规则集
                 self.register_cell(cell.id, generate_random_ruleset(self._rng))
 
             dc = self.cells[cell.id]

@@ -157,17 +157,9 @@ class GameSession:
                         pc.energy += 5
 
         # 决策阶段 (跳过玩家细胞)
-        if self.player:
-            player_cell_id = self.player.cell_id
-            self.decision.cells.pop(player_cell_id, None)
-        self.decision.step_all(self.world.grid, self.world.bus)
+        exclude = {self.player.cell_id} if self.player else set()
+        self.decision.step_all(self.world.grid, self.world.bus, exclude_ids=exclude)
         self.world.time_engine.step()
-        # 恢复玩家到决策引擎
-        if self.player and pc:
-            pid = self.player.cell_id
-            if pid not in self.decision.cells and pc.energy > 0:
-                from src.ruleset import generate_random_ruleset
-                self.decision.register_cell(pid, generate_random_ruleset(random.Random()))
         self._tick += 1
 
         g = self.world.grid
