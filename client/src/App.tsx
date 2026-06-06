@@ -36,7 +36,7 @@ export default function App() {
     '3': () => spellWithFeedback('神念探查'), '4': () => spellWithFeedback('血遁术'),
     '5': () => spellWithFeedback('夺舍术'), '6': () => spellWithFeedback('聚灵丹'),
     '7': () => spellWithFeedback('悟道丹'),
-    tab: (e) => setHudMode(m => !m),
+    tab: () => setHudMode(m => !m),
   });
 
   return (
