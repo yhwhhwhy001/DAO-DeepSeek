@@ -22,7 +22,8 @@ def make_grid_display(grid: Grid, width: int, height: int) -> str:
 
 class Renderer:
     def __init__(self, grid: Grid, bus: EventBus, config: dict,
-                 detector=None, entropy_engine=None, leaderboard_fn=None, pattern_hasher=None):
+                 detector=None, entropy_engine=None, leaderboard_fn=None,
+                 pattern_hasher=None, lineage_data: dict | None = None):
         self.grid = grid
         self.config = config
         self.console = Console()
@@ -30,6 +31,7 @@ class Renderer:
         self.entropy = entropy_engine
         self.leaderboard_fn = leaderboard_fn
         self.pattern_hasher = pattern_hasher
+        self._lineage = lineage_data
 
         self._tick: int = 0
         self._alive: int = 0
@@ -131,6 +133,24 @@ class Renderer:
                 )
             right_panels.append(Panel("\n".join(lb_lines), title="Leaderboard", border_style="magenta"))
 
+        # Lineage panel
+        if self._lineage and self._lineage.get("max_depth", 0) > 0:
+            ld = self._lineage
+            trend = ld.get("lifespan_trend", "?")
+            lineage_text = (
+                f"Generations: {len(ld.get('generations', {}))}  |  "
+                f"Lineages: {ld.get('total_lineages', 0)}  |  "
+                f"Max Depth: {ld.get('max_depth', 0)}\n"
+                f"Lifespan Trend: {trend}"
+            )
+            shapes = ld.get("shape_inheritance", {})
+            if shapes:
+                top_shapes = sorted(shapes.items(), key=lambda kv: kv[1]["generations"], reverse=True)[:3]
+                lineage_text += "\nTop Shapes:"
+                for h, info in top_shapes:
+                    lineage_text += f"\n  {h[:8]}: {info['generations']} gens"
+            right_panels.append(Panel(lineage_text.strip(), title="Lineage", border_style="cyan"))
+
         # Event log
         events = "\n".join(self._events[-6:]) if self._events else "No events yet"
         right_panels.append(Panel(events, title="Events", border_style="yellow"))
@@ -144,11 +164,18 @@ class Renderer:
                 Layout(right_panels[0], name="r0"),
                 Layout(right_panels[1], name="r1"),
             )
+        elif len(right_panels) == 3:
+            right_layout.split_column(
+                Layout(right_panels[0], name="r0", ratio=2),
+                Layout(right_panels[1], name="r1", ratio=3),
+                Layout(right_panels[2], name="r2", ratio=2),
+            )
         else:
             right_layout.split_column(
                 Layout(right_panels[0], name="r0", ratio=2),
                 Layout(right_panels[1], name="r1", ratio=3),
                 Layout(right_panels[2], name="r2", ratio=2),
+                Layout(right_panels[3], name="r3", ratio=2),
             )
         layout["right"].update(right_layout)
 
