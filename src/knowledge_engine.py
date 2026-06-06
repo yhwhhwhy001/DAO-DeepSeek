@@ -1,4 +1,4 @@
-"""Knowledge Engine — discovers cross-lineage causal knowledge."""
+"""知识引擎 —— 发现跨谱系因果知识。"""
 from dataclasses import dataclass
 
 

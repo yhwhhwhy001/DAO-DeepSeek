@@ -1,4 +1,4 @@
-"""Entropy Engine -- 3-layer entropy measurement and trend detection."""
+"""熵引擎 —— 三层熵度量与趋势检测。"""
 import math
 from collections import Counter
 from src.grid import Grid

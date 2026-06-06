@@ -1,4 +1,4 @@
-"""Pattern Hasher — shape hash computation and pattern registry."""
+"""模式哈希器 —— 形状哈希计算与模式注册。"""
 import hashlib
 from dataclasses import dataclass, field
 

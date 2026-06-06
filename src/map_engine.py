@@ -1,4 +1,4 @@
-"""Map Engine — solar energy gradient across the grid."""
+"""地图引擎 —— 网格上的太阳能梯度。"""
 class MapEngine:
     def __init__(self, height: int):
         self.height = height

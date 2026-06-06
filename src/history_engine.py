@@ -1,4 +1,4 @@
-"""History Engine — three-layer event recording and era detection."""
+"""历史引擎 —— 三层事件记录与纪元检测。"""
 from dataclasses import dataclass, field
 
 

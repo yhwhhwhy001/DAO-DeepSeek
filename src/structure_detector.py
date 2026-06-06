@@ -1,4 +1,4 @@
-"""Structure Detector -- extracts connected components and tracks them across ticks."""
+"""结构检测器 —— 提取连通组件并跨 tick 追踪它们。"""
 import hashlib
 from collections import deque
 from dataclasses import dataclass, field
@@ -135,7 +135,7 @@ class StructureDetector:
     def _match(self, components: list[Component], tick: int) -> None:
         unmatched = list(components)
 
-        # --- Fission detection ---
+        # --- 分裂检测 ---
         for struct in self.structures:
             if struct.status == "dead":
                 continue
@@ -201,7 +201,7 @@ class StructureDetector:
                         })
                         found_fission = True
                         break
-        # --- End fission detection ---
+        # --- 结束分裂检测 ---
 
         for struct in self.structures:
             if struct.status == "dead":
@@ -287,7 +287,7 @@ class StructureDetector:
     def _is_stable(self, struct: Structure) -> bool:
         if struct.age < STABILITY_AGE:
             return False
-        recent = struct.size_history[-10:]  # sliding window
+        recent = struct.size_history[-10:]  # 滑动窗口
         if len(recent) < 2:
             return True
         mean = sum(recent) / len(recent)

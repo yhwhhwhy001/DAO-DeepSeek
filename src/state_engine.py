@@ -1,4 +1,4 @@
-"""State Engine -- applies physics rules to the grid each tick."""
+"""State Engine -- 每 tick 对网格应用物理规则。"""
 import random
 from dataclasses import dataclass
 from collections import Counter
@@ -27,7 +27,7 @@ class StateEngine:
         self.resource_engine = resource_engine
         self._rng = random.Random(config.seed)
 
-    # --- Rule 1: Decay ---
+    # --- 规则 1：衰变 ---
 
     def apply_decay(self) -> None:
         to_kill: list[tuple[int, int]] = []
@@ -51,7 +51,7 @@ class StateEngine:
                     "cell_id": cell.id, "x": x, "y": y, "reason": "decay",
                 })
 
-    # --- Rule 2: Drift ---
+    # --- 规则 2：漂变 ---
 
     def apply_drift(self) -> None:
         for cell in list(self.grid.all_cells):
@@ -73,7 +73,7 @@ class StateEngine:
                     "old": old_type, "new": new_type,
                 })
 
-    # --- Rule 3: Fission ---
+    # --- 规则 3：分裂 ---
 
     def apply_fission(self) -> None:
         for cell in list(self.grid.all_cells):
@@ -97,7 +97,7 @@ class StateEngine:
                 "type": child.type, "energy": child.energy,
             })
 
-    # --- Rule 4: Fusion ---
+    # --- 规则 4：融合 ---
 
     def apply_fusion(self) -> None:
         processed: set[str] = set()
@@ -127,7 +127,7 @@ class StateEngine:
                 })
                 break
 
-    # --- Rule 5: Injection ---
+    # --- 规则 5：注入 ---
 
     def apply_injection(self) -> None:
         for _ in range(self.config.energy_input):

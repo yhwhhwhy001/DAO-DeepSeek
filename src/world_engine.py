@@ -1,4 +1,4 @@
-"""World Engine — orchestrator that creates and wires all components."""
+"""World Engine — 协调器，负责创建并连接所有组件。"""
 import random
 import yaml
 from pathlib import Path

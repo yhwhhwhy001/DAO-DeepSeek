@@ -1,4 +1,4 @@
-"""Grid -- 2D spatial container for cells with neighbor queries."""
+"""Grid -- 用于存放 Cell、支持邻域查询的二维空间容器。"""
 import random
 from src.cell import Cell
 

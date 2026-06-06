@@ -1,4 +1,4 @@
-"""Resource Engine — energy remnants from dead cells."""
+"""资源引擎 —— 死亡细胞遗留的能量残骸。"""
 from dataclasses import dataclass
 
 REMNANT_DECAY_RATE = 0.01

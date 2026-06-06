@@ -1,4 +1,4 @@
-"""Cell -- the fundamental unit of the DAO Genesis universe."""
+"""Cell -- DAO Genesis 宇宙的基本单元。"""
 from dataclasses import dataclass, field
 from uuid import uuid4
 

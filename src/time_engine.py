@@ -1,4 +1,4 @@
-"""Time Engine -- drives the tick loop with fixed phase ordering."""
+"""Time Engine -- 驱动 tick 循环，按固定阶段顺序执行。"""
 from src.event_bus import EventBus, EventType
 from src.state_engine import StateEngine
 
@@ -21,7 +21,7 @@ class TimeEngine:
 
         self.bus.publish(EventType.TICK_START, {"tick": self._tick})
 
-        # Phase 3: Decision phase (before physics)
+        # 阶段 3：决策阶段（在物理规则之前）
         if self.decision_engine is not None:
             self.decision_engine.step_all(self.state.grid, self.bus)
 

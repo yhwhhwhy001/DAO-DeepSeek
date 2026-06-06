@@ -1,4 +1,4 @@
-"""Myth Engine — founder narratives, hero lineages, and belief systems."""
+"""神话引擎 —— 创始叙事、英雄谱系与信仰体系。"""
 from dataclasses import dataclass, field
 
 

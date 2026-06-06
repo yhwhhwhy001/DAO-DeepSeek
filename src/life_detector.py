@@ -1,4 +1,4 @@
-"""Life Detector — 5-dimension Life Score computation and classification."""
+"""生命探测器 —— 五维生命分数计算与分类。"""
 import math
 from dataclasses import dataclass, field
 from src.event_bus import EventBus, EventType

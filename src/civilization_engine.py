@@ -1,4 +1,4 @@
-"""Civilization Engine — community detection and civilization tracking."""
+"""文明引擎 —— 社区检测与文明追踪。"""
 from dataclasses import dataclass, field
 from src.event_bus import EventBus, EventType
 

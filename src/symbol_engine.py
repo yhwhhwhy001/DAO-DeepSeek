@@ -1,4 +1,4 @@
-"""Symbol Engine — clusters Q-table states into emergent symbols."""
+"""符号引擎 —— 将 Q 表状态聚类为涌现符号。"""
 from dataclasses import dataclass, field
 
 STATE_SIMILARITY_THRESHOLD = 5

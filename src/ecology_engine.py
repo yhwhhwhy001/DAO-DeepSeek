@@ -1,4 +1,4 @@
-"""Ecology Engine — relationship detection and ecological network."""
+"""生态引擎 —— 关系检测与生态网络。"""
 from dataclasses import dataclass, field
 
 

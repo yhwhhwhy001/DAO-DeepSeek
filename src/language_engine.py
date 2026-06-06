@@ -1,4 +1,4 @@
-"""Language Engine — enhanced SIGNAL communication and stats tracking."""
+"""语言引擎 —— 增强的信令通信与统计追踪。"""
 
 
 def build_signal(channel: int, symbols: list[str]) -> dict:

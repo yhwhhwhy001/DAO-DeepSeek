@@ -1,4 +1,4 @@
-"""EventBus -- decoupled pub/sub between engines."""
+"""EventBus -- 引擎之间解耦的发布/订阅机制。"""
 from dataclasses import dataclass
 from enum import Enum, auto
 from typing import Any, Callable

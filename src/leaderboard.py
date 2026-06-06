@@ -1,4 +1,4 @@
-"""Leaderboard — structure ranking by stability, complexity, diversity, and pattern popularity."""
+"""排行榜 —— 按稳定性、复杂度、多样性和模式流行度对结构进行排名。"""
 
 
 def score_structure(
