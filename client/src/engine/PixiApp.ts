@@ -12,6 +12,15 @@ export class PixiApp {
   ready: Promise<void>;
   _lastGridData: any = null;
   _needsRedraw = false;
+  playerCellId: string | null = null;
+  cameraX = 0; cameraY = 0;
+
+  setPlayerCellId(id: string | null) { this.playerCellId = id; }
+
+  updateCamera(px: number, py: number, canvasW: number, canvasH: number) {
+    this.cameraX = Math.max(0, Math.min(px * this.step - canvasW / 2, 80 * this.step - canvasW));
+    this.cameraY = Math.max(0, Math.min(py * this.step - canvasH / 2, 40 * this.step - canvasH));
+  }
 
   constructor(canvas: HTMLCanvasElement, width: number, height: number) {
     this.step = this.cellSize + this.gap;
@@ -59,22 +68,25 @@ export class PixiApp {
     const g = this.drawLayer;
     g.clear();
 
-    // 残骸
     for (const r of grid.remnants) {
       const [x, y] = r;
-      g.circle(x * this.step + this.step / 2, y * this.step + this.step / 2, 1.5)
+      g.circle(x * this.step + this.step/2 - this.cameraX, y * this.step + this.step/2 - this.cameraY, 1.5)
        .fill({ color: 0x666666, alpha: 0.3 });
     }
 
-    // 批量画细胞到同一个 Graphics —— 高效
     for (const c of grid.cells) {
-      const [x, y, type, energy] = c;
-      const cx = x * this.step + this.step / 2;
-      const cy = y * this.step + this.step / 2;
+      const [x, y, type, energy, cellId] = c;
+      const sx = x * this.step + this.step/2 - this.cameraX;
+      const sy = y * this.step + this.step/2 - this.cameraY;
       const color = TYPE_COLORS[type] ?? 0xffffff;
       const r = Math.min(3 + energy * 0.15, 7);
 
-      g.circle(cx, cy, r).fill({ color, alpha: 0.85 });
+      if (cellId !== undefined && String(cellId) === this.playerCellId) {
+        // 金色光晕
+        g.circle(sx, sy, 10).fill({ color: 0xffd700, alpha: 0.3 });
+        g.circle(sx, sy, 6).fill({ color: 0xffd700, alpha: 0.7 });
+      }
+      g.circle(sx, sy, r).fill({ color, alpha: 0.85 });
     }
   }
 }

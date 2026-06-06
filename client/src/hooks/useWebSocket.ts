@@ -54,5 +54,11 @@ export function useWebSocket() {
   const resume = () => { console.log('[btn] resume'); wsRef.current?.send(JSON.stringify({ type: 'resume' })); };
   const setSpeed = (tps: number) => { console.log('[btn] speed', tps); wsRef.current?.send(JSON.stringify({ type: 'set_speed', tps })); };
 
-  return { state, connected, error, connect, pause, resume, setSpeed };
+  const sendMsg = useCallback((msg: object) => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify(msg));
+    }
+  }, []);
+
+  return { state, connected, error, connect, pause, resume, setSpeed, sendMsg };
 }
