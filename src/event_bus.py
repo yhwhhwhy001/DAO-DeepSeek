@@ -17,6 +17,9 @@ class EventType(Enum):
     LIFEFORM_DETECTED = auto()
     LIFEFORM_ADVANCED = auto()
     LIFEFORM_LOST = auto()
+    REMNANT_CREATED = auto()
+    REMNANT_ABSORBED = auto()
+    REMNANT_EXPIRED = auto()
     STRUCTURE_FISSION = auto()
 
 
