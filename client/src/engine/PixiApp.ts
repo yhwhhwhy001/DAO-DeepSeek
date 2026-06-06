@@ -3,19 +3,20 @@ import { Application, Graphics, Container } from 'pixi.js';
 const TYPE_COLORS = [0xffffff, 0xff4444, 0x44ff44, 0x4488ff];
 
 export class PixiApp {
-  app: Application;
-  cellLayer: Container;
-  remnantLayer: Container;
-  gridLayer: Graphics;
+  app!: Application;
+  cellLayer!: Container;
+  remnantLayer!: Container;
+  gridLayer!: Graphics;
   cellSize = 12;
   gap = 2;
   step: number;
+  ready: Promise<void>;
 
   constructor(canvas: HTMLCanvasElement, width: number, height: number) {
     this.step = this.cellSize + this.gap;
     this.app = new Application();
 
-    this.app.init({
+    this.ready = this.app.init({
       canvas,
       width: width * this.step,
       height: height * this.step,
@@ -28,12 +29,6 @@ export class PixiApp {
       this.app.stage.addChild(this.gridLayer, this.remnantLayer, this.cellLayer);
       this.drawGrid(width, height);
     });
-
-    this.cellLayer = new Container();
-    this.remnantLayer = new Container();
-    this.gridLayer = new Graphics();
-    this.app.stage.addChild(this.gridLayer, this.remnantLayer, this.cellLayer);
-    this.drawGrid(width, height);
   }
 
   drawGrid(w: number, h: number) {
@@ -50,6 +45,7 @@ export class PixiApp {
   }
 
   update(grid: { cells: any[]; remnants: any[] }) {
+    if (!this.cellLayer) return;
     this.cellLayer.removeChildren();
     this.remnantLayer.removeChildren();
 

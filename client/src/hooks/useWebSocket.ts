@@ -10,26 +10,41 @@ export interface SimulationState {
 export function useWebSocket() {
   const [state, setState] = useState<SimulationState | null>(null);
   const [connected, setConnected] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
 
   const connect = useCallback(() => {
     const host = window.location.hostname;
-    const ws = new WebSocket(`ws://${host}:8000/ws`);
-    wsRef.current = ws;
-    ws.onopen = () => {
-      setConnected(true);
-      ws.send(JSON.stringify({ type: 'start', config: 'experiments/highspeed.yaml' }));
-    };
-    ws.onmessage = (e) => {
-      const data = JSON.parse(e.data);
-      if (data.type === 'tick') setState(data);
-    };
-    ws.onclose = () => setConnected(false);
+    const url = `ws://${host}:8000/ws`;
+    try {
+      const ws = new WebSocket(url);
+      wsRef.current = ws;
+      ws.onopen = () => {
+        setConnected(true);
+        setError(null);
+        ws.send(JSON.stringify({ type: 'start', config: 'experiments/highspeed.yaml' }));
+      };
+      ws.onmessage = (e) => {
+        const data = JSON.parse(e.data);
+        if (data.type === 'tick') setState(data);
+      };
+      ws.onclose = () => {
+        setConnected(false);
+        if (!wsRef.current) return;
+        // 5 秒后自动重连
+        setTimeout(() => {
+          if (wsRef.current?.readyState === WebSocket.CLOSED) connect();
+        }, 5000);
+      };
+      ws.onerror = () => setError('无法连接到后端服务 (端口 8000)');
+    } catch {
+      setError('WebSocket 连接失败');
+    }
   }, []);
 
   const pause = () => wsRef.current?.send(JSON.stringify({ type: 'pause' }));
   const resume = () => wsRef.current?.send(JSON.stringify({ type: 'resume' }));
   const setSpeed = (tps: number) => wsRef.current?.send(JSON.stringify({ type: 'set_speed', tps }));
 
-  return { state, connected, connect, pause, resume, setSpeed };
+  return { state, connected, error, connect, pause, resume, setSpeed };
 }
