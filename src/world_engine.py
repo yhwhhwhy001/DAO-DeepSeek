@@ -18,6 +18,7 @@ class WorldEngine:
         self.config = config
         self.grid = Grid(width=w["width"], height=w["height"], boundary=w["boundary"])
         self.bus = EventBus()
+        self.bus.subscribe_all(self._on_event)
 
         physics_config = PhysicsConfig(
             decay_rate=p["decay_rate"],
@@ -54,7 +55,6 @@ class WorldEngine:
 
     def run(self, ticks: int) -> list[dict]:
         self._stats = []
-        self.bus.subscribe_all(self._on_event)
         self.time_engine.run(ticks)
         return self._stats
 
