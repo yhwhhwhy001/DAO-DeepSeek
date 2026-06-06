@@ -1,0 +1,19 @@
+scanner:
+  coarse_samples: 500
+  coarse_ticks: 200
+  coarse_top_pct: 0.20
+  fine_ticks: 500
+  fine_seeds: 3
+
+param_ranges:
+  decay_rate: [0.1, 2.0]
+  drift_probability: [0.0, 0.2]
+  fission_threshold: [5.0, 20.0]
+  fusion_probability: [0.0, 0.05]
+  energy_input: [1, 20]
+  num_types: [2, 6]
+
+world:
+  width: 40
+  height: 20
+  boundary: "toroidal"
