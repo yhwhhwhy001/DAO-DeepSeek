@@ -102,30 +102,30 @@ def fine_scan(top_results: list[ScanResult]) -> list[ScanResult]:
 
 
 def main():
-    print("Phase 1 Parameter Scanner")
-    print(f"Coarse: {COARSE_SAMPLES} samples x {COARSE_TICKS} ticks")
-    print(f"Fine: top {int(COARSE_SAMPLES * COARSE_TOP_PCT)} x {FINE_TICKS} ticks x {FINE_SEEDS} seeds")
+    print("第一阶段 参数扫描器")
+    print(f"粗筛: {COARSE_SAMPLES} 样本 × {COARSE_TICKS} tick")
+    print(f"细筛: 前 {int(COARSE_SAMPLES * COARSE_TOP_PCT)} × {FINE_TICKS} tick × {FINE_SEEDS} 种子")
     print()
 
-    print("Running coarse scan...")
+    print("正在运行粗筛...")
     coarse = coarse_scan()
     top_n = max(1, int(len(coarse) * COARSE_TOP_PCT))
     top = coarse[:top_n]
 
-    print(f"Top {top_n} coarse results:")
+    print(f"前 {top_n} 粗筛结果:")
     for i, r in enumerate(top[:10], 1):
-        print(f"  {i}. score={r.score:.1f} stable={r.stable_structures} "
-              f"age={r.max_structure_age} patterns={r.unique_patterns} "
-              f"alive={r.final_alive} params={r.params}")
+        print(f"  {i}. 得分={r.score:.1f} 稳定={r.stable_structures} "
+              f"年龄={r.max_structure_age} 模式={r.unique_patterns} "
+              f"存活={r.final_alive} 参数={r.params}")
 
-    print(f"\nRunning fine scan on top {top_n}...")
+    print(f"\n正在对前 {top_n} 运行细筛...")
     fine = fine_scan(top)
 
-    print(f"\nTop 10 fine results:")
+    print(f"\n前 10 细筛结果:")
     for i, r in enumerate(fine[:10], 1):
-        print(f"  {i}. score={r.score:.1f} stable={r.stable_structures} "
-              f"age={r.max_structure_age} patterns={r.unique_patterns} "
-              f"seed={r.seed} alive={r.final_alive} params={r.params}")
+        print(f"  {i}. 得分={r.score:.1f} 稳定={r.stable_structures} "
+              f"年龄={r.max_structure_age} 模式={r.unique_patterns} "
+              f"种子={r.seed} 存活={r.final_alive} 参数={r.params}")
 
     out_dir = Path("data/scan_results")
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -136,7 +136,7 @@ def main():
                 "final_alive": r.final_alive} for r in fine]
     with open(out_dir / "phase1_scan_results.json", "w") as f:
         json.dump(output, f, indent=2)
-    print(f"\nResults saved to {out_dir / 'phase1_scan_results.json'}")
+    print(f"\n结果已保存至 {out_dir / 'phase1_scan_results.json'}")
 
 
 if __name__ == "__main__":

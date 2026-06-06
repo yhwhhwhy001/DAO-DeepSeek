@@ -1,4 +1,4 @@
-"""DAO 创世纪 — 第三阶段 决策涌现。"""
+"""DAO 创世纪 — 第七阶段 文明层。"""
 import sys
 import time
 import yaml
@@ -38,7 +38,7 @@ def main():
     with open(config_path) as f:
         config = yaml.safe_load(f)
 
-    print(f"DAO 创世纪 第三阶段 — {config['experiment']['name']}")
+    print(f"DAO 创世纪 第七阶段 — {config['experiment']['name']}")
     print("按 Ctrl+C 停止。\n")
 
     world = WorldEngine(config)
@@ -186,7 +186,7 @@ def main():
                 for s2 in detector.get_active():
                     if s.id >= s2.id:
                         continue
-                    # Check if structures are adjacent
+                    # 检查结构是否相邻
                     s_cells = {(c.x, c.y) for c in world.grid.all_cells if c.id in s.cells}
                     s2_cells = {(c.x, c.y) for c in world.grid.all_cells if c.id in s2.cells}
                     # 简单邻近性检查
@@ -251,7 +251,7 @@ def main():
             top_action = max(action_counts, key=action_counts.get) \
                 if action_counts else "N/A"
 
-            # Track rules
+            # 追踪规则
             for cell in world.grid.all_cells:
                 if cell.id in decision_engine.cells:
                     dc = decision_engine.cells[cell.id]

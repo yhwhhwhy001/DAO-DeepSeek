@@ -108,11 +108,13 @@ class Renderer:
             trend = self.entropy.current_trend
             trend_styles = {"ordering": "green", "chaos": "red", "steady": "yellow", "diversifying": "blue"}
             style = trend_styles.get(trend, "white")
+            trend_labels = {"ordering": "有序化", "chaos": "混沌化", "steady": "稳态", "diversifying": "多样化"}
+            trend_label = trend_labels.get(trend, trend)
             entropy_text = (
-                f"Global:  {snap['global_entropy']:.2f} bits\n"
-                f"Local:   {snap['local_entropy_mean']:.2f} ± {snap['local_entropy_std']:.2f}\n"
-                f"Struct:  {snap['structure_entropy']:.2f} bits\n"
-                f"Trend:   [{style}]{trend}[/{style}]"
+                f"全局熵:  {snap['global_entropy']:.2f} bit\n"
+                f"局部熵:   {snap['local_entropy_mean']:.2f} ± {snap['local_entropy_std']:.2f}\n"
+                f"结构熵:  {snap['structure_entropy']:.2f} bit\n"
+                f"趋势:   [{style}]{trend_label}[/{style}]"
             )
             right_panels.append(Panel(entropy_text, title="熵", border_style="blue"))
 
@@ -143,11 +145,11 @@ class Renderer:
 
             ranked = self.leaderboard_fn(struct_dicts, pattern_occs, top_n=5)
             n_patterns = self.pattern_hasher.unique_count() if self.pattern_hasher else 0
-            lb_lines = [f"Total: {len(structs)} ({len(stable)} stable) | Patterns: {n_patterns}"]
+            lb_lines = [f"总计: {len(structs)} ({len(stable)} 稳定) | 模式: {n_patterns}"]
             for i, r in enumerate(ranked, 1):
                 lb_lines.append(
                     f"{i}. {r['id']}  age={r['age']}  sz={r['size']}  "
-                    f"hash={r.get('shape_hash','')[:6]}  score={r['score']:.2f}"
+                    f"hash={r.get('shape_hash','')[:6]}  得分={r['score']:.2f}"
                 )
             right_panels.append(Panel("\n".join(lb_lines), title="排行榜", border_style="magenta"))
 
@@ -155,12 +157,12 @@ class Renderer:
         if self._decision:
             ds = self._decision
             dec_text = (
-                f"Q-cells: {ds.get('q_cells', 0)}  |  "
-                f"Active: {ds.get('non_stay_pct', 0):.0f}%\n"
-                f"Top action: {ds.get('top_action', 'N/A')}"
+                f"Q表细胞: {ds.get('q_cells', 0)}  |  "
+                f"活跃: {ds.get('non_stay_pct', 0):.0f}%\n"
+                f"首选动作: {ds.get('top_action', 'N/A')}"
             )
             if ds.get('top_rules'):
-                dec_text += f"\nTop rule: {ds['top_rules'][0] if ds['top_rules'] else 'N/A'}"
+                dec_text += f"\n首选规则: {ds['top_rules'][0] if ds['top_rules'] else 'N/A'}"
             right_panels.append(Panel(dec_text, title="决策", border_style="green"))
 
         # 生命面板
@@ -168,7 +170,7 @@ class Renderer:
             ls = self._life
             proto = ls.get("proto_count", 0)
             true_count = ls.get("true_count", 0)
-            life_text = f"Proto-lifeforms: {proto}  |  True lifeforms: {true_count}"
+            life_text = f"准生命: {proto}  |  真生命: {true_count}"
             top = ls.get("top_lifeforms", [])
             for i, lf in enumerate(top[:3], 1):
                 life_text += f"\n{i}. {lf['id']}  score={lf['score']:.1f}  {lf['class']}"
@@ -177,49 +179,51 @@ class Renderer:
         # 生态面板
         if self._ecology:
             ed = self._ecology
-            eco_text = f"Nodes: {ed.get('nodes', 0)}  |  Edges: {ed.get('edges', 0)}"
+            eco_text = f"节点: {ed.get('nodes', 0)}  |  边: {ed.get('edges', 0)}"
             competitors = ed.get("competition_pairs", 0)
             mutualists = ed.get("mutualism_pairs", 0)
-            eco_text += f"\nCompetition: {competitors}  |  Mutualism: {mutualists}"
-            eco_text += f"\nRemnants: {ed.get('remnant_count', 0)}"
+            eco_text += f"\n竞争: {competitors}  |  互惠: {mutualists}"
+            eco_text += f"\n残骸: {ed.get('remnant_count', 0)}"
             right_panels.append(Panel(eco_text, title="生态", border_style="yellow"))
 
         # 认知面板
         if self._cog:
             cg = self._cog
-            cog_text = f"Symbols: {cg.get('symbols', 0)}  |  Knowledge: {cg.get('knowledge', 0)}"
-            cog_text += f"\nSignals: {cg.get('signals', 0)}  |  Cross-lin: {cg.get('cross_lineage_pct', 0):.0f}%"
-            cog_text += f"\nTop symbol: {cg.get('top_symbol', 'N/A')}"
+            cog_text = f"符号: {cg.get('symbols', 0)}  |  知识: {cg.get('knowledge', 0)}"
+            cog_text += f"\n信号: {cg.get('signals', 0)}  |  跨谱系: {cg.get('cross_lineage_pct', 0):.0f}%"
+            cog_text += f"\n首选符号: {cg.get('top_symbol', 'N/A')}"
             right_panels.append(Panel(cog_text, title="认知", border_style="bright_cyan"))
 
         # 文明面板
         if self._civ:
             cv = self._civ
-            civ_text = f"Active: {cv.get('active_civs', 0)}  |  Fallen: {cv.get('fallen_civs', 0)}"
+            civ_text = f"活跃: {cv.get('active_civs', 0)}  |  灭亡: {cv.get('fallen_civs', 0)}"
             top = cv.get('top_civ')
             if top:
-                civ_text += f"\nTop: {top.get('id', 'N/A')} era={top.get('era', '?')} size={top.get('size', 0)}"
+                civ_text += f"\n首位: {top.get('id', 'N/A')} 时代={top.get('era', '?')} 规模={top.get('size', 0)}"
                 hero = cv.get('hero_narrative', '')
                 if hero:
-                    civ_text += f"\nHero: {hero[:60]}..."
+                    civ_text += f"\n英雄: {hero[:60]}..."
             right_panels.append(Panel(civ_text, title="文明", border_style="bright_magenta"))
 
         # 谱系面板
         if self._lineage and self._lineage.get("max_depth", 0) > 0:
             ld = self._lineage
             trend = ld.get("lifespan_trend", "?")
+            trend_labels = {"increasing": "增长", "decreasing": "下降", "stable": "稳定", "insufficient_data": "数据不足"}
+            trend_label = trend_labels.get(trend, trend)
             lineage_text = (
-                f"Generations: {len(ld.get('generations', {}))}  |  "
-                f"Lineages: {ld.get('total_lineages', 0)}  |  "
-                f"Max Depth: {ld.get('max_depth', 0)}\n"
-                f"Lifespan Trend: {trend}"
+                f"世代: {len(ld.get('generations', {}))}  |  "
+                f"谱系: {ld.get('total_lineages', 0)}  |  "
+                f"最大深度: {ld.get('max_depth', 0)}\n"
+                f"寿命趋势: {trend_label}"
             )
             shapes = ld.get("shape_inheritance", {})
             if shapes:
                 top_shapes = sorted(shapes.items(), key=lambda kv: kv[1]["generations"], reverse=True)[:3]
-                lineage_text += "\nTop Shapes:"
+                lineage_text += "\n形态传承:"
                 for h, info in top_shapes:
-                    lineage_text += f"\n  {h[:8]}: {info['generations']} gens"
+                    lineage_text += f"\n  {h[:8]}: {info['generations']} 代"
             right_panels.append(Panel(lineage_text.strip(), title="谱系", border_style="cyan"))
 
         # 事件日志
