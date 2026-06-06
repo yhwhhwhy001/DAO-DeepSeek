@@ -77,6 +77,14 @@ class DeathPredictor:
         X_array = np.array([[d.get(k, 0.0) for k in FEATURE_NAMES] for d in X])
         y_array = np.array(y)
 
+        classes = np.unique(y_array)
+        if len(classes) < 2:
+            # Single-class data: set accuracy to majority proportion and skip fit
+            self.accuracy = 1.0
+            self.is_trained = False
+            self._feature_importances = [(name, 0.0) for name in FEATURE_NAMES]
+            return
+
         self.model = LogisticRegression(max_iter=1000, class_weight="balanced")
         self.model.fit(X_array, y_array)
 
