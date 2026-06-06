@@ -1,7 +1,7 @@
-"""符号引擎 —— 将 Q 表状态聚类为涌现符号。"""
+"""符号引擎 —— 将 Q 表状态聚类为涌现符号，跨 scan 持久化。"""
 from dataclasses import dataclass, field
 
-STATE_SIMILARITY_THRESHOLD = 5
+STATE_SIMILARITY_THRESHOLD = 6
 
 
 def state_similarity(sk1: str, sk2: str) -> int:
@@ -22,6 +22,7 @@ class Symbol:
     first_seen: int = 0
     last_seen: int = 0
     parent_symbols: list[str] = field(default_factory=list)
+    state_keys: set[str] = field(default_factory=set)
 
 
 class SymbolEngine:
@@ -49,7 +50,8 @@ class SymbolEngine:
             assigned.update(cluster)
             clusters.append(cluster)
 
-        symbols = []
+        # 构建新符号，优先匹配已有符号以保持 ID 稳定
+        new_symbols = []
         for cluster in clusters:
             centroid = max(cluster, key=lambda sk: sum(
                 state_similarity(sk, other) for other in cluster))
@@ -57,14 +59,29 @@ class SymbolEngine:
             dom_action = max(set(actions), key=actions.count) if actions else "STAY"
             cell_count = sum(1 for sk, _, _ in q_data if sk in cluster)
 
-            sym = Symbol(
-                id=f"sym_{self._next_id}",
-                centroid_state=centroid,
-                dominant_action=dom_action,
-                cell_count=cell_count,
-            )
-            self._next_id += 1
-            symbols.append(sym)
+            # 尝试匹配已有符号（跨 scan 持久化）
+            matched = None
+            for old_sym in self.symbols:
+                if state_similarity(centroid, old_sym.centroid_state) >= 5:
+                    matched = old_sym
+                    break
 
-        self.symbols = symbols
-        return symbols
+            if matched:
+                matched.cell_count = cell_count
+                matched.dominant_action = dom_action
+                matched.centroid_state = centroid
+                matched.state_keys = cluster
+                new_symbols.append(matched)
+            else:
+                sym = Symbol(
+                    id=f"sym_{self._next_id}",
+                    centroid_state=centroid,
+                    dominant_action=dom_action,
+                    cell_count=cell_count,
+                    state_keys=cluster,
+                )
+                self._next_id += 1
+                new_symbols.append(sym)
+
+        self.symbols = new_symbols
+        return new_symbols

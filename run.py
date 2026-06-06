@@ -155,14 +155,14 @@ def main():
 
             symbols = symbol_engine.scan(q_data)
 
-            # 从 Q 表访问顺序构建转移
+            # 用符号的 state_keys 集合匹配 Q 表
             transitions = []
             for dc in decision_engine.cells.values():
-                keys = list(dc.utility._q_table.keys())
+                keys = set(dc.utility._q_table.keys())
                 for s in symbols:
-                    if s.centroid_state in keys:
+                    if s.state_keys & keys:
                         for s2 in symbols:
-                            if s2.centroid_state in keys and s.id != s2.id:
+                            if s.id != s2.id and s2.state_keys & keys:
                                 transitions.append((s.id, s2.id))
 
             knowledge = knowledge_engine.scan(transitions, {})

@@ -1,7 +1,7 @@
 """效用引擎 —— Q 表、SARSA 更新、奖励计算、继承。"""
 from collections import OrderedDict
 
-ALPHA = 0.1
+ALPHA = 0.3
 GAMMA = 0.9
 MAX_Q_STATES = 200
 Q_INHERIT_DECAY = 0.5

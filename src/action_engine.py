@@ -18,8 +18,8 @@ ACTION_COST = {
 
 RULE_WEIGHT_FACTOR = 0.6
 Q_WEIGHT_FACTOR = 0.4
-TEMPERATURE_INITIAL = 0.5
-TEMPERATURE_DECAY = 0.99
+TEMPERATURE_INITIAL = 0.8
+TEMPERATURE_DECAY = 0.999
 
 
 def evaluate_rules(rule_set: RuleSet, state: dict) -> dict[str, float]:
@@ -62,6 +62,6 @@ class ActionEngine:
                            q_values.get(a, 0.0) * Q_WEIGHT_FACTOR)
         action = softmax_select(composite, rng, self.temperature)
         self.temperature *= TEMPERATURE_DECAY
-        if self.temperature < 0.05:
-            self.temperature = 0.05
+        if self.temperature < 0.15:
+            self.temperature = 0.15
         return action, composite[action]
