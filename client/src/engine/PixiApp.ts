@@ -6,6 +6,7 @@ export class PixiApp {
   app!: Application;
   gridLayer!: Graphics;
   drawLayer!: Graphics;
+  playerLayer!: Graphics;
   cellSize = 12;
   gap = 2;
   step: number;
@@ -15,6 +16,7 @@ export class PixiApp {
   playerCellId: string | null = null;
   cameraX = 0; cameraY = 0;
   _targetCX = 0; _targetCY = 0;
+  _pulseTick = 0;
 
   setPlayerCellId(id: string | null) { this.playerCellId = id; }
 
@@ -37,18 +39,24 @@ export class PixiApp {
       width: width * this.step,
       height: height * this.step,
       background: 0x0a0a1a,
-      antialias: false,  // 关闭抗锯齿提升性能
+      antialias: false,
     }).then(() => {
       this.gridLayer = new Graphics();
       this.drawLayer = new Graphics();
-      this.app.stage.addChild(this.gridLayer, this.drawLayer);
+      this.playerLayer = new Graphics();
+      this.app.stage.addChild(this.gridLayer, this.drawLayer, this.playerLayer);
       this.drawGrid(width, height);
       this.app.ticker.maxFPS = 30;
       this.app.ticker.add(() => {
         this._lerpCamera();
+        this._pulseTick++;
         if (this._needsRedraw && this._lastGridData) {
           this._drawCells(this._lastGridData);
           this._needsRedraw = false;
+        }
+        if (this.playerCellId) {
+          // 脉冲动画：每帧微调 alpha
+          this._drawPlayerHighlight(this._lastGridData);
         }
       });
     });
@@ -71,29 +79,43 @@ export class PixiApp {
     this._needsRedraw = true;
   }
 
+  _drawPlayerHighlight(grid: any) {
+    if (!grid?.cells || !this.playerCellId) return;
+    const g = this.playerLayer;
+    g.clear();
+    for (const c of grid.cells) {
+      const [x, y, _type, _energy, cellId] = c;
+      if (!cellId || String(cellId) !== this.playerCellId) continue;
+      const sx = x * this.step + this.step / 2 - this.cameraX;
+      const sy = y * this.step + this.step / 2 - this.cameraY;
+      const pulse = Math.sin(this._pulseTick * 0.1) * 0.2 + 0.6;
+      // 外层光环
+      g.circle(sx, sy, 14).fill({ color: 0xffd700, alpha: pulse * 0.25 });
+      g.circle(sx, sy, 9).fill({ color: 0xffd700, alpha: pulse * 0.5 });
+      // 内核（最高亮）
+      g.circle(sx, sy, 5).fill({ color: 0xffffff, alpha: 0.9 });
+    }
+  }
+
   _drawCells(grid: { cells: number[][]; remnants: number[][] }) {
     const g = this.drawLayer;
     g.clear();
 
     for (const r of grid.remnants) {
       const [x, y] = r;
-      g.circle(x * this.step + this.step/2 - this.cameraX, y * this.step + this.step/2 - this.cameraY, 1.5)
+      g.circle(x * this.step + this.step / 2 - this.cameraX, y * this.step + this.step / 2 - this.cameraY, 1.5)
        .fill({ color: 0x666666, alpha: 0.3 });
     }
 
     for (const c of grid.cells) {
       const [x, y, type, energy, cellId] = c;
-      const sx = x * this.step + this.step/2 - this.cameraX;
-      const sy = y * this.step + this.step/2 - this.cameraY;
+      const isPlayer = cellId && String(cellId) === this.playerCellId;
+      const sx = x * this.step + this.step / 2 - this.cameraX;
+      const sy = y * this.step + this.step / 2 - this.cameraY;
       const color = TYPE_COLORS[type] ?? 0xffffff;
-      const r = Math.min(3 + energy * 0.15, 7);
+      const r = isPlayer ? 6 : Math.min(3 + energy * 0.15, 7);
 
-      if (cellId !== undefined && String(cellId) === this.playerCellId) {
-        // 金色光晕
-        g.circle(sx, sy, 10).fill({ color: 0xffd700, alpha: 0.3 });
-        g.circle(sx, sy, 6).fill({ color: 0xffd700, alpha: 0.7 });
-      }
-      g.circle(sx, sy, r).fill({ color, alpha: 0.85 });
+      g.circle(sx, sy, r).fill({ color: isPlayer ? 0xffd700 : color, alpha: 0.85 });
     }
   }
 }
