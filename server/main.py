@@ -23,6 +23,7 @@ from src.symbol_engine import SymbolEngine
 from src.knowledge_engine import KnowledgeEngine
 from src.language_engine import LanguageEngine
 from src.civilization_engine import CivilizationEngine
+from src.cultivator import Cultivator, SPELL_COSTS
 from src.history_engine import HistoryEngine
 from src.myth_engine import MythEngine
 
@@ -35,6 +36,7 @@ class GameSession:
         self.running = False
         self.tps = 60
         self._tick = 0
+        self.player = None
         # Lazy-init attributes
         self.detector = None
         self.pattern_hasher = None
@@ -88,6 +90,15 @@ class GameSession:
         self.world.state_engine.resource_engine = self.resource
         self.world.time_engine.resource_engine = self.resource
 
+        from src.cell import Cell
+        pos = self.world.grid.random_empty_position()
+        if pos:
+            player_cell = Cell(x=pos[0], y=pos[1], type=0, energy=10.0)
+            self.world.grid.place(player_cell)
+            self.decision.register_cell(player_cell.id, generate_random_ruleset(rng))
+            self.player = Cultivator(player_cell.id)
+            self.player._rng = rng
+
         def on_fission(event):
             self.decision.inherit_on_fission(event.data["parent_id"], event.data["child_id"], rng)
         self.world.bus.subscribe(EventType.STRUCTURE_FISSION, on_fission)
@@ -97,6 +108,31 @@ class GameSession:
         self.world.bus.subscribe(EventType.CELL_DESTROYED, on_destroy)
 
     def step(self) -> dict:
+        # 玩家 tick
+        player_data = None
+        if self.player and self.player.cell_id:
+            player_cell = self.world.grid.get_by_id(self.player.cell_id)
+            if player_cell:
+                self.player.energy = player_cell.energy
+                self.player.max_energy = max(self.player.max_energy, player_cell.energy)
+                self.player.tick_age += 1
+                if self.player.shield_ticks > 0:
+                    self.player.shield_ticks -= 1
+                self.player.try_breakthrough()
+                player_data = {
+                    "energy": round(self.player.energy, 1),
+                    "max_energy": round(self.player.max_energy, 1),
+                    "realm": self.player.realm.name,
+                    "realm_index": self.player._realm_index,
+                    "skills": self.player.skills,
+                    "herbs": self.player.herbs,
+                    "shield_ticks": self.player.shield_ticks,
+                    "reincarnation": self.player.reincarnation_count,
+                    "cell_id": self.player.cell_id,
+                }
+            else:
+                self.player = None
+
         # 决策阶段
         self.decision.step_all(self.world.grid, self.world.bus)
         self.world.time_engine.step()
@@ -104,7 +140,9 @@ class GameSession:
 
         g = self.world.grid
         # 压缩格式: [x, y, type, energy] 数组
-        cells = [[c.x, c.y, c.type, round(c.energy, 1)] for c in g.all_cells]
+        cells = [[c.x, c.y, c.type, round(c.energy, 1),
+                  self.player.cell_id if self.player and c.id == self.player.cell_id else ""]
+                 for c in g.all_cells]
 
         remnants = []
         if self.resource:
@@ -175,6 +213,7 @@ class GameSession:
                       "structures": self.detector.active_count,
                       "stable": self.detector.stable_count,
                       "lifeforms": len(lifeforms)},
+            "player": player_data,
             "panels": {
                 "entropy": entropy_data,
                 "leaderboard": leaderboard_data,
@@ -213,6 +252,56 @@ async def websocket_endpoint(ws: WebSocket):
         elif cmd == "set_speed":
             session.tps = msg.get("tps", 60)
             print(f"[WS] 速度设为 tps={session.tps}", flush=True)
+
+        elif cmd == "player_move":
+            if session.player and session.world:
+                dx, dy = msg.get("dx", 0), msg.get("dy", 0)
+                cell = session.world.grid.get_by_id(session.player.cell_id)
+                if cell:
+                    nx, ny = cell.x + dx, cell.y + dy
+                    resolved = session.world.grid._resolve(nx, ny)
+                    if resolved and session.world.grid.is_empty(*resolved):
+                        session.world.grid.remove(cell.x, cell.y)
+                        cell.x, cell.y = resolved
+                        session.world.grid.place(cell)
+
+        elif cmd == "player_spell":
+            if session.player:
+                spell = msg.get("spell", "")
+                if spell == "吐纳术":
+                    cell = session.world.grid.get_by_id(session.player.cell_id)
+                    if cell:
+                        for dx in range(-2, 3):
+                            for dy in range(-2, 3):
+                                nx, ny = cell.x + dx, cell.y + dy
+                                resolved = session.world.grid._resolve(nx, ny)
+                                if resolved:
+                                    absorbed = session.resource.absorb(*resolved, cell.type, 1.0)
+                                    if absorbed > 0:
+                                        cell.energy += absorbed * 3
+                                        session.player.total_energy_absorbed += absorbed
+                elif spell in SPELL_COSTS:
+                    if session.player.cast(spell):
+                        if spell == "血遁术":
+                            cell = session.world.grid.get_by_id(session.player.cell_id)
+                            if cell:
+                                empty = session.world.grid.random_empty_position()
+                                if empty:
+                                    session.world.grid.remove(cell.x, cell.y)
+                                    cell.x, cell.y = empty
+                                    session.world.grid.place(cell)
+
+        elif cmd == "player_reincarnate":
+            if session.player:
+                pos = session.world.grid.random_empty_position()
+                if pos:
+                    from src.cell import Cell
+                    new_cell = Cell(x=pos[0], y=pos[1], type=0,
+                                    energy=session.player.energy * 0.3 + 5)
+                    session.world.grid.place(new_cell)
+                    session.decision.register_cell(new_cell.id,
+                        generate_random_ruleset(random.Random(session.world._rng.randint(0, 10000))))
+                    session.player = session.player.reincarnate(new_cell.id)
 
 
 async def _run_loop(ws: WebSocket):

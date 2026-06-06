@@ -69,6 +69,12 @@ class Grid:
     def empty_positions_around(self, x: int, y: int) -> list[tuple[int, int]]:
         return [p for p in self.positions_around(x, y) if self.is_empty(*p)]
 
+    def get_by_id(self, cell_id: str) -> Cell | None:
+        for cell in self._cells.values():
+            if cell.id == cell_id:
+                return cell
+        return None
+
     def random_empty_position(self) -> tuple[int, int] | None:
         all_positions = {(x, y) for x in range(self.width) for y in range(self.height)}
         empty = list(all_positions - set(self._cells.keys()))
