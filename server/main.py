@@ -159,11 +159,18 @@ class GameSession:
         # 决策阶段 (跳过玩家细胞)
         exclude = {self.player.cell_id} if self.player else set()
         self.decision.step_all(self.world.grid, self.world.bus, exclude_ids=exclude)
-        # 保存玩家灵力，防止物理规则（fission等）改变它
-        saved_energy = pc.energy if pc else 0
+        # 防止物理规则杀死玩家：保存位置+灵力，step后恢复
+        saved_x, saved_y, saved_energy = (pc.x, pc.y, pc.energy) if pc else (0, 0, 0)
         self.world.time_engine.step()
-        if pc and self.world.grid.get_by_id(self.player.cell_id):
-            pc.energy = max(pc.energy, saved_energy)  # 只增不减
+        if self.player:
+            pc = self.world.grid.get_by_id(self.player.cell_id)
+            if not pc:
+                # 物理规则移除了玩家细胞——重建
+                from src.cell import Cell
+                pc = Cell(x=saved_x, y=saved_y, type=0, energy=saved_energy, id=self.player.cell_id)
+                self.world.grid.place(pc)
+            else:
+                pc.energy = max(pc.energy, saved_energy)
         self._tick += 1
 
         g = self.world.grid
