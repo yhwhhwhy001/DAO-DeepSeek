@@ -14,6 +14,7 @@ class EventType(Enum):
     STRUCTURE_LOST = auto()
     STRUCTURE_STABLE = auto()
     TREND_CHANGED = auto()
+    STRUCTURE_FISSION = auto()
 
 
 @dataclass
