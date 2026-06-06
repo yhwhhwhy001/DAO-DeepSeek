@@ -2,7 +2,7 @@ import { useState, useRef, useCallback } from 'react';
 
 export interface SimulationState {
   tick: number;
-  grid: { width: number; height: number; cells: {x:number;y:number;type:number;energy:number;id:string}[]; remnants: {x:number;y:number;energy:number;type:number}[] };
+  grid: { width: number; height: number; cells: number[][]; remnants: number[][] };
   stats: { alive: number; energy: number; structures: number; stable: number; lifeforms: number };
   panels: { entropy: any; leaderboard: any; life: any; cognition: any };
 }

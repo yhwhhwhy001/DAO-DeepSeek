@@ -49,7 +49,7 @@ export class PixiApp {
     for (let y = 0; y <= h; y++) g.moveTo(0, y * this.step).lineTo(w * this.step, y * this.step).stroke();
   }
 
-  update(grid: { cells: any[]; remnants: any[] }) {
+  update(grid: { cells: number[][]; remnants: number[][] }) {
     if (!this.cellLayer) {
       console.warn('[PixiApp] update 被调用但 cellLayer 未就绪');
       return;
@@ -58,18 +58,20 @@ export class PixiApp {
     this.remnantLayer.removeChildren();
 
     for (const r of grid.remnants) {
+      const [x, y, _type, energy] = r;
       const g = new Graphics();
-      g.circle(r.x * this.step + this.step / 2, r.y * this.step + this.step / 2, 2)
+      g.circle(x * this.step + this.step / 2, y * this.step + this.step / 2, Math.max(1, energy * 0.8))
        .fill({ color: 0x666666, alpha: 0.4 });
       this.remnantLayer.addChild(g);
     }
 
     for (const c of grid.cells) {
+      const [x, y, type, energy] = c;
       const g = new Graphics();
-      const cx = c.x * this.step + this.step / 2;
-      const cy = c.y * this.step + this.step / 2;
-      const color = TYPE_COLORS[c.type] ?? 0xffffff;
-      const r = Math.min(4 + c.energy * 0.15, 8);
+      const cx = x * this.step + this.step / 2;
+      const cy = y * this.step + this.step / 2;
+      const color = TYPE_COLORS[type] ?? 0xffffff;
+      const r = Math.min(4 + energy * 0.15, 8);
 
       g.circle(cx, cy, r).fill({ color, alpha: 0.85 });
       if (r > 5) g.circle(cx, cy, r + 2).fill({ color, alpha: 0.12 });

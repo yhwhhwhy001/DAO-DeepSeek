@@ -103,15 +103,12 @@ class GameSession:
         self._tick += 1
 
         g = self.world.grid
-        cells = []
-        for cell in g.all_cells:
-            cells.append({"x": cell.x, "y": cell.y, "type": cell.type,
-                          "energy": round(cell.energy, 2), "id": cell.id[:8]})
+        # 压缩格式: [x, y, type, energy] 数组
+        cells = [[c.x, c.y, c.type, round(c.energy, 1)] for c in g.all_cells]
 
         remnants = []
         if self.resource:
-            for r in self.resource.all_remnants:
-                remnants.append({"x": r.x, "y": r.y, "energy": round(r.energy, 2), "type": r.type})
+            remnants = [[r.x, r.y, r.type, round(r.energy, 1)] for r in self.resource.all_remnants]
 
         # 每 50 tick 更新符号和知识
         if self._tick % 50 == 0:
