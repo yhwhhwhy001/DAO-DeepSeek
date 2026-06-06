@@ -95,7 +95,7 @@ class GameSession:
         from src.cell import Cell
         pos = self.world.grid.random_empty_position()
         if pos:
-            player_cell = Cell(x=pos[0], y=pos[1], type=0, energy=10.0)
+            player_cell = Cell(x=pos[0], y=pos[1], type=0, energy=20.0)
             self.world.grid.place(player_cell)
             self.decision.register_cell(player_cell.id, generate_random_ruleset(rng))
             self.player = Cultivator(player_cell.id)
@@ -137,14 +137,12 @@ class GameSession:
                 self.player = None
 
         # 妖兽阶段
-        px = None
-        py = None
+        px = None; py = None; pc = None
         if self.player:
             pc = self.world.grid.get_by_id(self.player.cell_id)
             if pc:
                 px, py = pc.x, pc.y
         beast_events = self.beast_engine.tick(px, py)
-        # 处理妖兽攻击
         for evt in beast_events:
             if evt["type"] == "beast_attack" and pc:
                 dmg = evt["damage"]
@@ -153,16 +151,23 @@ class GameSession:
                 buffs = self.player.get_skill_buffs()
                 dmg *= (1 - buffs["damage_reduce"])
                 pc.energy -= dmg
-                self.player.total_kills += 0  # 被攻击不算击杀
-                # 击杀妖兽：如果玩家灵力够高，自动反击
                 if pc.energy > dmg * 3:
                     if self.beast_engine.damage_beast(evt["id"], pc.energy * 0.1):
                         self.player.total_kills += 1
-                        pc.energy += 5  # 击杀奖励
+                        pc.energy += 5
 
-        # 决策阶段
+        # 决策阶段 (跳过玩家细胞)
+        if self.player:
+            player_cell_id = self.player.cell_id
+            self.decision.cells.pop(player_cell_id, None)
         self.decision.step_all(self.world.grid, self.world.bus)
         self.world.time_engine.step()
+        # 恢复玩家到决策引擎
+        if self.player and pc:
+            pid = self.player.cell_id
+            if pid not in self.decision.cells and pc.energy > 0:
+                from src.ruleset import generate_random_ruleset
+                self.decision.register_cell(pid, generate_random_ruleset(random.Random()))
         self._tick += 1
 
         g = self.world.grid

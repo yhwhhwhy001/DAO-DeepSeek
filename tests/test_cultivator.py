@@ -6,7 +6,7 @@ class TestRealm:
     def test_start_at_qi_condensation(self):
         cv = Cultivator(cell_id="p1")
         assert cv.realm.name == "练气"
-        assert cv.energy == 10.0
+        assert cv.energy == 20.0
 
     def test_breakthrough_succeeds(self):
         cv = Cultivator(cell_id="p1")

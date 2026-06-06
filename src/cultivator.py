@@ -34,8 +34,8 @@ class Realm:
 class Cultivator:
     def __init__(self, cell_id: str):
         self.cell_id = cell_id
-        self.energy = 10.0
-        self.max_energy = 10.0
+        self.energy = 20.0
+        self.max_energy = 20.0
         self._realm_index = 0
         self.skills: list[str] = []          # 已装备功法
         self.discovered_skills: list[str] = []  # 已发现可装备功法
