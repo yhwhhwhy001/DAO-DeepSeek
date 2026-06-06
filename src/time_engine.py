@@ -4,10 +4,11 @@ from src.state_engine import StateEngine
 
 
 class TimeEngine:
-    def __init__(self, bus: EventBus, state_engine: StateEngine, decision_engine=None):
+    def __init__(self, bus: EventBus, state_engine: StateEngine, decision_engine=None, resource_engine=None):
         self.bus = bus
         self.state = state_engine
         self.decision_engine = decision_engine
+        self.resource_engine = resource_engine
         self._tick: int = 0
 
     @property
@@ -29,6 +30,9 @@ class TimeEngine:
         self.state.apply_fission()
         self.state.apply_fusion()
         self.state.apply_injection()
+
+        if self.resource_engine is not None:
+            self.resource_engine.decay_all()
 
         self.bus.publish(EventType.TICK_END, {
             "tick": self._tick,

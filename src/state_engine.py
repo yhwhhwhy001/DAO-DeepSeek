@@ -19,10 +19,12 @@ class PhysicsConfig:
 
 
 class StateEngine:
-    def __init__(self, config: PhysicsConfig, grid: Grid, bus: EventBus):
+    def __init__(self, config: PhysicsConfig, grid: Grid, bus: EventBus, map_engine=None, resource_engine=None):
         self.config = config
         self.grid = grid
         self.bus = bus
+        self.map_engine = map_engine
+        self.resource_engine = resource_engine
         self._rng = random.Random(config.seed)
 
     # --- Rule 1: Decay ---
@@ -37,6 +39,10 @@ class StateEngine:
                 "old": old_energy, "new": cell.energy,
             })
             if cell.energy <= 0:
+                if self.resource_engine is not None:
+                    remnant_energy = (cell.energy + self.config.decay_rate) * 0.5
+                    if remnant_energy > 0.01:
+                        self.resource_engine.create(cell.x, cell.y, remnant_energy, cell.type)
                 to_kill.append((cell.x, cell.y))
         for x, y in to_kill:
             cell = self.grid.remove(x, y)
@@ -138,8 +144,15 @@ class StateEngine:
                     "old": old_energy, "new": target.energy,
                 })
             else:
+                multiplier = 1.0
+                if self.map_engine is not None:
+                    multiplier = self.map_engine.get_multiplier(pos[0], pos[1])
                 new_type = self._rng.randrange(self.config.num_types)
-                cell = Cell(x=pos[0], y=pos[1], type=new_type, energy=1.0)
+                initial_energy = 1.0 * multiplier
+                if self.resource_engine is not None:
+                    absorbed = self.resource_engine.absorb(pos[0], pos[1], new_type, fraction=1.0)
+                    initial_energy += absorbed
+                cell = Cell(x=pos[0], y=pos[1], type=new_type, energy=initial_energy)
                 self.grid.place(cell)
                 self.bus.publish(EventType.CELL_CREATED, {
                     "cell_id": cell.id, "x": cell.x, "y": cell.y,
