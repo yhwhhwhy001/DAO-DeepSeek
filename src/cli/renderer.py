@@ -24,7 +24,8 @@ class Renderer:
     def __init__(self, grid: Grid, bus: EventBus, config: dict,
                  detector=None, entropy_engine=None, leaderboard_fn=None,
                  pattern_hasher=None, lineage_data: dict | None = None,
-                 decision_stats: dict | None = None):
+                 decision_stats: dict | None = None,
+                 life_stats: dict | None = None):
         self.grid = grid
         self.config = config
         self.console = Console()
@@ -34,6 +35,7 @@ class Renderer:
         self.pattern_hasher = pattern_hasher
         self._lineage = lineage_data
         self._decision = decision_stats
+        self._life = life_stats
 
         self._tick: int = 0
         self._alive: int = 0
@@ -147,6 +149,17 @@ class Renderer:
                 dec_text += f"\nTop rule: {ds['top_rules'][0] if ds['top_rules'] else 'N/A'}"
             right_panels.append(Panel(dec_text, title="Decision", border_style="green"))
 
+        # Life panel
+        if self._life:
+            ls = self._life
+            proto = ls.get("proto_count", 0)
+            true_count = ls.get("true_count", 0)
+            life_text = f"Proto-lifeforms: {proto}  |  True lifeforms: {true_count}"
+            top = ls.get("top_lifeforms", [])
+            for i, lf in enumerate(top[:3], 1):
+                life_text += f"\n{i}. {lf['id']}  score={lf['score']:.1f}  {lf['class']}"
+            right_panels.append(Panel(life_text, title="Life", border_style="bright_green"))
+
         # Lineage panel
         if self._lineage and self._lineage.get("max_depth", 0) > 0:
             ld = self._lineage
@@ -184,6 +197,13 @@ class Renderer:
                 Layout(right_panels[1], name="r1", ratio=3),
                 Layout(right_panels[2], name="r2", ratio=2),
             )
+        elif len(right_panels) == 4:
+            right_layout.split_column(
+                Layout(right_panels[0], name="r0", ratio=2),
+                Layout(right_panels[1], name="r1", ratio=3),
+                Layout(right_panels[2], name="r2", ratio=2),
+                Layout(right_panels[3], name="r3", ratio=2),
+            )
         elif len(right_panels) == 5:
             right_layout.split_column(
                 Layout(right_panels[0], name="r0", ratio=2),
@@ -191,6 +211,15 @@ class Renderer:
                 Layout(right_panels[2], name="r2", ratio=1),
                 Layout(right_panels[3], name="r3", ratio=2),
                 Layout(right_panels[4], name="r4", ratio=2),
+            )
+        elif len(right_panels) == 6:
+            right_layout.split_column(
+                Layout(right_panels[0], name="r0", ratio=2),
+                Layout(right_panels[1], name="r1", ratio=3),
+                Layout(right_panels[2], name="r2", ratio=1),
+                Layout(right_panels[3], name="r3", ratio=2),
+                Layout(right_panels[4], name="r4", ratio=2),
+                Layout(right_panels[5], name="r5", ratio=2),
             )
         else:
             right_layout.split_column(
