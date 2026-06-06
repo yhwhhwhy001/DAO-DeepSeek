@@ -84,6 +84,7 @@ class GameSession:
         self.knowledge_engine = KnowledgeEngine()
         self.language_engine = LanguageEngine()
         self.civ_engine = CivilizationEngine(self.world.bus)
+        self.civ_history: list[dict] = []  # (tick, active_count, fallen_count)
         self.history = HistoryEngine()
         self.myth = MythEngine()
 
@@ -270,14 +271,20 @@ class GameSession:
         active_civs = [c for c in self.civ_engine.civilizations if c.status != 'fallen']
         fallen_civs = [c for c in self.civ_engine.civilizations if c.status == 'fallen']
         top_civ = max(active_civs, key=lambda c: len(c.member_lineages)) if active_civs else None
+        # 累积历史
+        if self._tick % 50 == 0:
+            self.civ_history.append({"tick": self._tick, "active": len(active_civs), "fallen": len(fallen_civs)})
+            if len(self.civ_history) > 200:
+                self.civ_history = self.civ_history[-200:]
         civ_data = {
             "active": len(active_civs),
             "fallen": len(fallen_civs),
             "top": {"name": top_civ.name, "era": top_civ.era, "size": len(top_civ.member_lineages),
                     "born": top_civ.born_at, "peak": top_civ.peak_size} if top_civ else None,
-            "timeline": [{"name": c.name, "era": c.era, "size": len(c.member_lineages),
-                          "born": c.born_at, "status": c.status}
-                         for c in sorted(self.civ_engine.civilizations, key=lambda c: c.born_at)[-20:]],
+            "list": [{"name": c.name, "era": c.era, "size": len(c.member_lineages),
+                      "born": c.born_at, "status": c.status}
+                     for c in sorted(self.civ_engine.civilizations, key=lambda c: c.born_at)[-10:]],
+            "history": list(self.civ_history[-50:]),
         }
 
         return {

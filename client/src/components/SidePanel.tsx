@@ -1,10 +1,12 @@
 import PanelSection from './PanelSection';
+import TimelineChart from './TimelineChart';
 
 export default function SidePanel({ panels, stats }: { panels: any; stats: any }) {
   const e = panels?.entropy;
   const lb = panels?.leaderboard;
   const life = panels?.life;
   const cog = panels?.cognition;
+  const civ = panels?.civilization;
 
   return (
     <div style={{ width:280, background:'#0d0d18', borderLeft:'1px solid #1a1a2e', overflowY:'auto', padding:8, flexShrink:0 }}>
@@ -17,7 +19,22 @@ export default function SidePanel({ panels, stats }: { panels: any; stats: any }
         </>}
       </PanelSection>
 
-      <PanelSection title="排行榜" defaultOpen>
+      <PanelSection title="文明" defaultOpen>
+        {civ && <>
+          <div>活跃: {civ.active}  灭亡: {civ.fallen}</div>
+          {civ.top && <div style={{color:'#ffd700',marginTop:4}}>
+            ✦ {civ.top.name} ({civ.top.era}) 规模={civ.top.size}
+          </div>}
+          {civ.list?.slice(0, 5).map((c: any, i: number) => (
+            <div key={i} style={{fontSize:11,color:c.status==='fallen'?'#884444':'#88aa88'}}>
+              {c.name} {c.era} sz={c.size} {c.status==='fallen'?'†':''}
+            </div>
+          ))}
+          <TimelineChart history={civ.history} />
+        </>}
+      </PanelSection>
+
+      <PanelSection title="排行榜">
         {lb?.map((r: any, i: number) => (
           <div key={i}>{i+1}. {r.id} age={r.age} sz={r.size} 得分={r.score}</div>
         ))}
