@@ -1,4 +1,4 @@
-"""Memory Engine — heritable memory with snapshots, events, and lineage tracking."""
+"""记忆引擎 —— 可继承的记忆，包含快照、事件和谱系追踪。"""
 from dataclasses import dataclass, field
 from src.event_bus import EventBus, EventType
 from src.structure_detector import StructureDetector
@@ -188,7 +188,7 @@ class MemoryEngine:
             if len(m.snapshots) > MAX_SNAPSHOTS:
                 m.snapshots = m.snapshots[-MAX_SNAPSHOTS:]
 
-            # Event detection
+            # 事件检测
             if total_e < 1.0:
                 m.events.append(MemoryEvent(tick=tick, event_type="near_death", data={"energy": total_e}))
             if len(m.snapshots) >= 10:

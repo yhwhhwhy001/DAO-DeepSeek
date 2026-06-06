@@ -44,7 +44,7 @@ class CivilizationEngine:
         if ecology_network is None or ecology_network.number_of_nodes() < 3:
             return []
 
-        # Simple community detection: connected components
+        # 简单社区检测：连通分量
         try:
             import networkx as nx
             communities = list(nx.connected_components(ecology_network))

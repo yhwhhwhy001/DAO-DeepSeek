@@ -70,27 +70,27 @@ class EcologyEngine:
                 if not a_cells or not b_cells:
                     continue
 
-                # Direct cell overlap → competition
+                # 直接细胞重叠 → 竞争
                 overlap_ratio = len(a_cells & b_cells) / min(len(a_cells), len(b_cells))
                 if overlap_ratio > 0.3:
                     net.edges.append(EcologyEdge(
                         A["id"], B["id"], "competition", round(overlap_ratio, 2)))
                     continue
 
-                # Check adjacency (expanded regions)
+                # 检查相邻（扩展区域）
                 a_region = _cell_region(a_cells)
                 b_region = _cell_region(b_cells)
                 adjacent = bool(a_region & b_region)
                 if not adjacent:
                     continue
 
-                # Same primary type + adjacent → competition
+                # 相同主类型且相邻 → 竞争
                 if A.get("primary_type") == B.get("primary_type"):
                     net.edges.append(EcologyEdge(
                         A["id"], B["id"], "competition", 0.5))
                     continue
 
-                # Different types + adjacent + old enough → mutualism
+                # 不同类型且相邻且足够古老 → 共生
                 if A.get("age", 0) > 50 and B.get("age", 0) > 50:
                     net.edges.append(EcologyEdge(
                         A["id"], B["id"], "mutualism",
