@@ -135,6 +135,74 @@ class StructureDetector:
     def _match(self, components: list[Component], tick: int) -> None:
         unmatched = list(components)
 
+        # --- Fission detection ---
+        for struct in self.structures:
+            if struct.status == "dead":
+                continue
+            if len(unmatched) < 2:
+                continue
+
+            overlapping = []
+            for comp in unmatched:
+                denom = max(len(struct.cells), len(comp.cell_ids), 1)
+                overlap = len(struct.cells & comp.cell_ids) / denom
+                if overlap > 0:
+                    overlapping.append((comp, overlap))
+
+            if len(overlapping) < 2:
+                continue
+
+            found_fission = False
+            for i in range(len(overlapping)):
+                if found_fission:
+                    break
+                for j in range(i + 1, len(overlapping)):
+                    c1, _ = overlapping[i]
+                    c2, _ = overlapping[j]
+                    if c1.cell_ids & c2.cell_ids:
+                        continue
+                    combined = c1.cell_ids | c2.cell_ids
+                    combined_overlap = len(struct.cells & combined) / max(len(struct.cells), len(combined))
+                    if combined_overlap >= 0.60:
+                        if len(c1.cell_ids) >= len(c2.cell_ids):
+                            parent_comp, child_comp = c1, c2
+                        else:
+                            parent_comp, child_comp = c2, c1
+
+                        self._update(struct, parent_comp, tick)
+                        unmatched.remove(parent_comp)
+                        unmatched.remove(child_comp)
+
+                        positions = _cell_ids_to_positions(self.grid, child_comp.cell_ids)
+                        shape_hash = compute_shape_hash(positions, child_comp.centroid) if positions else ""
+                        child_struct = Structure(
+                            id=child_comp.id,
+                            age=1,
+                            cells=child_comp.cell_ids,
+                            size_history=[len(child_comp.cell_ids)],
+                            centroid=child_comp.centroid,
+                            bbox=child_comp.bbox,
+                            shape_hash=shape_hash,
+                            status="candidate",
+                            born_at=tick,
+                            last_seen_at=tick,
+                            missed_ticks=0,
+                        )
+                        self.structures.append(child_struct)
+                        self.bus.publish(EventType.STRUCTURE_FORMED, {
+                            "structure_id": child_struct.id,
+                            "component_id": child_comp.id,
+                            "cell_count": len(child_comp.cell_ids),
+                        })
+                        self.bus.publish(EventType.STRUCTURE_FISSION, {
+                            "parent_id": struct.id,
+                            "child_id": child_struct.id,
+                            "tick": tick,
+                        })
+                        found_fission = True
+                        break
+        # --- End fission detection ---
+
         for struct in self.structures:
             if struct.status == "dead":
                 continue

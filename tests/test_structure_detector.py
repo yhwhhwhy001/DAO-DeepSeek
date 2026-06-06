@@ -161,3 +161,71 @@ class TestStructureDetector:
         bus.tick = 1
         bus.publish(EventType.TICK_END, {"tick": 1, "alive_count": 2, "total_energy": 6.0})
         assert len(det.structures[0].shape_hash) > 0
+
+    def test_fission_detection_creates_child(self):
+        g = make_grid()
+        bus = EventBus()
+        det = StructureDetector(g, bus)
+
+        g.place(Cell(x=5, y=5, id="a"))
+        g.place(Cell(x=5, y=6, id="b"))
+        g.place(Cell(x=6, y=5, id="c"))
+        g.place(Cell(x=6, y=6, id="d"))
+        bus.tick = 1
+        bus.publish(EventType.TICK_END, {"tick": 1, "alive_count": 4, "total_energy": 12.0})
+        assert len(det.structures) == 1
+        parent = det.structures[0]
+
+        # Split: move 2 cells far away
+        g.remove(5, 5)
+        g.remove(5, 6)
+        g.place(Cell(x=15, y=15, id="a"))
+        g.place(Cell(x=15, y=16, id="b"))
+
+        bus.tick = 2
+        bus.publish(EventType.TICK_END, {"tick": 2, "alive_count": 4, "total_energy": 12.0})
+        assert len(det.structures) == 2
+        assert any(s.id == parent.id for s in det.structures)
+
+    def test_fission_emits_event(self):
+        g = make_grid()
+        bus = EventBus()
+        det = StructureDetector(g, bus)
+        fission_events = []
+        bus.subscribe(EventType.STRUCTURE_FISSION, lambda e: fission_events.append(e.data))
+
+        g.place(Cell(x=5, y=5, id="a"))
+        g.place(Cell(x=5, y=6, id="b"))
+        g.place(Cell(x=6, y=5, id="c"))
+        g.place(Cell(x=6, y=6, id="d"))
+        bus.tick = 1
+        bus.publish(EventType.TICK_END, {"tick": 1, "alive_count": 4, "total_energy": 12.0})
+
+        g.remove(5, 5)
+        g.remove(5, 6)
+        g.place(Cell(x=15, y=15, id="a"))
+        g.place(Cell(x=15, y=16, id="b"))
+        bus.tick = 2
+        bus.publish(EventType.TICK_END, {"tick": 2, "alive_count": 4, "total_energy": 12.0})
+
+        assert len(fission_events) == 1
+        assert "parent_id" in fission_events[0]
+        assert "child_id" in fission_events[0]
+
+    def test_no_fission_when_overlap_too_low(self):
+        g = make_grid()
+        bus = EventBus()
+        det = StructureDetector(g, bus)
+
+        g.place(Cell(x=5, y=5, id="a"))
+        g.place(Cell(x=5, y=6, id="b"))
+        bus.tick = 1
+        bus.publish(EventType.TICK_END, {"tick": 1, "alive_count": 2, "total_energy": 6.0})
+        assert len(det.structures) == 1
+
+        g.place(Cell(x=15, y=15, id="x"))
+        g.place(Cell(x=15, y=16, id="y"))
+        bus.tick = 2
+        bus.publish(EventType.TICK_END, {"tick": 2, "alive_count": 4, "total_energy": 12.0})
+
+        assert len(det.structures) == 2
