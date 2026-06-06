@@ -3,6 +3,12 @@ from src.event_bus import EventBus, EventType
 
 
 class TestEventBus:
+    def test_lifeform_events_work(self):
+        bus = EventBus()
+        received = []
+        bus.subscribe(EventType.LIFEFORM_DETECTED, lambda e: received.append(e))
+        bus.publish(EventType.LIFEFORM_DETECTED, {"structure_id": "s1", "score": 75.0, "classification": "proto-lifeform"})
+        assert len(received) == 1
     def test_subscribe_and_publish(self):
         bus = EventBus()
         received = []

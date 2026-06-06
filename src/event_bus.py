@@ -14,6 +14,9 @@ class EventType(Enum):
     STRUCTURE_LOST = auto()
     STRUCTURE_STABLE = auto()
     TREND_CHANGED = auto()
+    LIFEFORM_DETECTED = auto()
+    LIFEFORM_ADVANCED = auto()
+    LIFEFORM_LOST = auto()
     STRUCTURE_FISSION = auto()
 
 
