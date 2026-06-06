@@ -30,8 +30,8 @@ export default function App() {
   }, [castSpell]);
 
   useKeyboard({
-    w: (e) => moveTo(0, -1), s: (e) => moveTo(0, 1),
-    a: (e) => moveTo(-1, 0), d: (e) => moveTo(1, 0),
+    w: () => moveTo(0, -1), s: () => moveTo(0, 1),
+    a: () => moveTo(-1, 0), d: () => moveTo(1, 0),
     '1': () => spellWithFeedback('吐纳术'), '2': () => spellWithFeedback('护体罡气'),
     '3': () => spellWithFeedback('神念探查'), '4': () => spellWithFeedback('血遁术'),
     '5': () => spellWithFeedback('夺舍术'), '6': () => spellWithFeedback('聚灵丹'),

@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-type KeyHandler = Record<string, (e: KeyboardEvent) => void>;
+type KeyHandler = Record<string, (e?: KeyboardEvent) => void>;
 
 export function useKeyboard(handlers: KeyHandler) {
   useEffect(() => {
