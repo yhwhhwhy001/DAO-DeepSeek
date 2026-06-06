@@ -24,6 +24,10 @@ from src.cli.renderer import Renderer
 from src.symbol_engine import SymbolEngine
 from src.knowledge_engine import KnowledgeEngine
 from src.language_engine import LanguageEngine
+from src.civilization_engine import CivilizationEngine
+from src.history_engine import HistoryEngine
+from src.myth_engine import MythEngine, HeroLineage
+import networkx as nx
 
 
 def main():
@@ -50,6 +54,12 @@ def main():
     knowledge_engine = KnowledgeEngine()
     language_engine = LanguageEngine()
     cognition_data = {"symbols": 0, "knowledge": 0, "signals": 0, "cross_lineage_pct": 0, "top_symbol": "N/A"}
+
+    # Phase 7 engines
+    civilization_engine = CivilizationEngine(world.bus)
+    history_engine = HistoryEngine()
+    myth_engine = MythEngine()
+    civilization_data = {"active_civs": 0, "fallen_civs": 0, "top_civ": None, "hero_narrative": ""}
 
     # Phase 1
     detector = StructureDetector(world.grid, world.bus)
@@ -166,6 +176,67 @@ def main():
                 "top_symbol": lang_stats["top_symbol"],
             })
 
+        # Civilization scan every 100 ticks
+        if tick % 100 == 0 and tick > 0:
+            # Build ecology network graph
+            G = nx.Graph()
+            for s in detector.get_active():
+                G.add_node(s.id)
+            for s in detector.get_active():
+                for s2 in detector.get_active():
+                    if s.id >= s2.id:
+                        continue
+                    # Check if structures are adjacent
+                    s_cells = {(c.x, c.y) for c in world.grid.all_cells if c.id in s.cells}
+                    s2_cells = {(c.x, c.y) for c in world.grid.all_cells if c.id in s2.cells}
+                    # Simple proximity check
+                    close = False
+                    for x, y in s_cells:
+                        for dx in (-2, -1, 0, 1, 2):
+                            for dy in (-2, -1, 0, 1, 2):
+                                if (x+dx, y+dy) in s2_cells:
+                                    close = True
+                                    break
+                            if close:
+                                break
+                        if close:
+                            break
+                    if close:
+                        G.add_edge(s.id, s2.id, relationship="proximity", strength=0.3)
+
+            civs = civilization_engine.scan(G, {}, tick)
+
+            active = sum(1 for c in civilization_engine.civilizations if c.status != "fallen")
+            fallen = sum(1 for c in civilization_engine.civilizations if c.status == "fallen")
+
+            # Find top civ
+            top_civ = None
+            for c in civilization_engine.civilizations:
+                if c.status != "fallen":
+                    if top_civ is None or len(c.member_lineages) > len(top_civ.member_lineages):
+                        top_civ = c
+
+            # Record history
+            for c in civilization_engine.civilizations:
+                history_engine.record_era(c.id, c.born_at, tick, c.era, len(c.member_lineages))
+
+            # Generate myth narrative for top civ
+            hero_narrative = ""
+            if top_civ:
+                myth_engine.generate_founder_narrative(
+                    civ_name=top_civ.id, founder=top_civ.founder_lineage,
+                    born_at=top_civ.born_at, region="top" if tick < 500 else "bottom",
+                    competitor_count=0, mutualism_count=0,
+                    peak_tick=top_civ.peak_tick, peak_size=top_civ.peak_size,
+                    peak_cells=10)
+
+            civilization_data.update({
+                "active_civs": active,
+                "fallen_civs": fallen,
+                "top_civ": {"id": top_civ.id, "era": top_civ.era, "size": len(top_civ.member_lineages)} if top_civ else None,
+                "hero_narrative": hero_narrative,
+            })
+
         # Decision stats every 20 ticks
         if tick % 20 == 0:
             action_counts = {}
@@ -265,6 +336,7 @@ def main():
         life_stats=life_stats,
         ecology_data=ecology_data,
         cognition_data=cognition_data,
+        civilization_data=civilization_data,
     )
 
     fps = 15
@@ -278,6 +350,7 @@ def main():
                 renderer._life = life_stats
                 renderer._ecology = ecology_data
                 renderer._cog = cognition_data
+                renderer._civ = civilization_data
                 renderer.display_tick(live)
                 time.sleep(1.0 / fps)
     except KeyboardInterrupt:

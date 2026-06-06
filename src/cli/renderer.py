@@ -32,7 +32,8 @@ class Renderer:
                  decision_stats: dict | None = None,
                  life_stats: dict | None = None,
                  ecology_data: dict | None = None,
-                 cognition_data: dict | None = None):
+                 cognition_data: dict | None = None,
+                 civilization_data: dict | None = None):
         self.grid = grid
         self.config = config
         self.console = Console()
@@ -45,6 +46,7 @@ class Renderer:
         self._life = life_stats
         self._ecology = ecology_data
         self._cog = cognition_data
+        self._civ = civilization_data
 
         self._tick: int = 0
         self._alive: int = 0
@@ -190,6 +192,18 @@ class Renderer:
             cog_text += f"\nTop symbol: {cg.get('top_symbol', 'N/A')}"
             right_panels.append(Panel(cog_text, title="Cognition", border_style="bright_cyan"))
 
+        # Civilization panel
+        if self._civ:
+            cv = self._civ
+            civ_text = f"Active: {cv.get('active_civs', 0)}  |  Fallen: {cv.get('fallen_civs', 0)}"
+            top = cv.get('top_civ')
+            if top:
+                civ_text += f"\nTop: {top.get('id', 'N/A')} era={top.get('era', '?')} size={top.get('size', 0)}"
+                hero = cv.get('hero_narrative', '')
+                if hero:
+                    civ_text += f"\nHero: {hero[:60]}..."
+            right_panels.append(Panel(civ_text, title="Civilization", border_style="bright_magenta"))
+
         # Lineage panel
         if self._lineage and self._lineage.get("max_depth", 0) > 0:
             ld = self._lineage
@@ -271,6 +285,18 @@ class Renderer:
                 Layout(right_panels[5], name="r5", ratio=2),
                 Layout(right_panels[6], name="r6", ratio=1),
                 Layout(right_panels[7], name="r7", ratio=1),
+            )
+        elif len(right_panels) == 9:
+            right_layout.split_column(
+                Layout(right_panels[0], name="r0", ratio=2),
+                Layout(right_panels[1], name="r1", ratio=3),
+                Layout(right_panels[2], name="r2", ratio=1),
+                Layout(right_panels[3], name="r3", ratio=2),
+                Layout(right_panels[4], name="r4", ratio=2),
+                Layout(right_panels[5], name="r5", ratio=2),
+                Layout(right_panels[6], name="r6", ratio=1),
+                Layout(right_panels[7], name="r7", ratio=1),
+                Layout(right_panels[8], name="r8", ratio=1),
             )
         else:
             right_layout.split_column(
