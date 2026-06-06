@@ -9,13 +9,18 @@ from src.event_bus import EventBus, EventType
 TYPE_CHARS = {0: "·", 1: "○", 2: "◇", 3: "□"}
 
 
-def make_grid_display(grid: Grid, width: int, height: int) -> str:
+def make_grid_display(grid: Grid, width: int, height: int, remnants=None) -> str:
     lines = []
     for y in range(height):
         row = []
         for x in range(width):
             cell = grid.get(x, y)
-            row.append(TYPE_CHARS.get(cell.type, "?") if cell else " ")
+            if cell:
+                row.append(TYPE_CHARS.get(cell.type, "?"))
+            elif remnants and (x, y) in remnants:
+                row.append("+")
+            else:
+                row.append(" ")
         lines.append("".join(row))
     return "\n".join(lines)
 
@@ -25,7 +30,8 @@ class Renderer:
                  detector=None, entropy_engine=None, leaderboard_fn=None,
                  pattern_hasher=None, lineage_data: dict | None = None,
                  decision_stats: dict | None = None,
-                 life_stats: dict | None = None):
+                 life_stats: dict | None = None,
+                 ecology_data: dict | None = None):
         self.grid = grid
         self.config = config
         self.console = Console()
@@ -36,6 +42,7 @@ class Renderer:
         self._lineage = lineage_data
         self._decision = decision_stats
         self._life = life_stats
+        self._ecology = ecology_data
 
         self._tick: int = 0
         self._alive: int = 0
@@ -82,7 +89,10 @@ class Renderer:
         )
 
         # Left: universe grid
-        grid_str = make_grid_display(self.grid, w["width"], w["height"])
+        remnants_dict = {}
+        if self._ecology:
+            remnants_dict = self._ecology.get("remnants", {})
+        grid_str = make_grid_display(self.grid, w["width"], w["height"], remnants_dict)
         layout["left"].update(Panel(grid_str, title="Universe", border_style="green"))
 
         # Right: stacked panels (Entropy, Leaderboard, Events)
@@ -160,6 +170,16 @@ class Renderer:
                 life_text += f"\n{i}. {lf['id']}  score={lf['score']:.1f}  {lf['class']}"
             right_panels.append(Panel(life_text, title="Life", border_style="bright_green"))
 
+        # Ecology panel
+        if self._ecology:
+            ed = self._ecology
+            eco_text = f"Nodes: {ed.get('nodes', 0)}  |  Edges: {ed.get('edges', 0)}"
+            competitors = ed.get("competition_pairs", 0)
+            mutualists = ed.get("mutualism_pairs", 0)
+            eco_text += f"\nCompetition: {competitors}  |  Mutualism: {mutualists}"
+            eco_text += f"\nRemnants: {ed.get('remnant_count', 0)}"
+            right_panels.append(Panel(eco_text, title="Ecology", border_style="yellow"))
+
         # Lineage panel
         if self._lineage and self._lineage.get("max_depth", 0) > 0:
             ld = self._lineage
@@ -220,6 +240,16 @@ class Renderer:
                 Layout(right_panels[3], name="r3", ratio=2),
                 Layout(right_panels[4], name="r4", ratio=2),
                 Layout(right_panels[5], name="r5", ratio=2),
+            )
+        elif len(right_panels) == 7:
+            right_layout.split_column(
+                Layout(right_panels[0], name="r0", ratio=2),
+                Layout(right_panels[1], name="r1", ratio=3),
+                Layout(right_panels[2], name="r2", ratio=1),
+                Layout(right_panels[3], name="r3", ratio=2),
+                Layout(right_panels[4], name="r4", ratio=2),
+                Layout(right_panels[5], name="r5", ratio=2),
+                Layout(right_panels[6], name="r6", ratio=1),
             )
         else:
             right_layout.split_column(

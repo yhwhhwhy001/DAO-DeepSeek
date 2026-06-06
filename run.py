@@ -17,6 +17,9 @@ from src.decision_engine import DecisionEngine
 from src.ruleset import generate_random_ruleset
 from src.life_detector import LifeDetector
 from src.rule_evolution import RuleEvolutionTracker
+from src.map_engine import MapEngine
+from src.resource_engine import ResourceEngine
+from src.ecology_engine import EcologyEngine
 from src.cli.renderer import Renderer
 
 
@@ -32,6 +35,12 @@ def main():
     print("Press Ctrl+C to stop.\n")
 
     world = WorldEngine(config)
+
+    # Phase 5 engines
+    map_engine = MapEngine(height=config["world"]["height"])
+    resource_engine = ResourceEngine()
+    ecology_engine = EcologyEngine()
+    ecology_data = {"nodes": 0, "edges": 0, "competition_pairs": 0, "mutualism_pairs": 0, "remnant_count": 0, "remnants": {}}
 
     # Phase 1
     detector = StructureDetector(world.grid, world.bus)
@@ -61,6 +70,11 @@ def main():
     # Wire decision engine to time engine
     world.time_engine.decision_engine = decision_engine
 
+    # Wire Phase 5 engines
+    world.state_engine.map_engine = map_engine
+    world.state_engine.resource_engine = resource_engine
+    world.time_engine.resource_engine = resource_engine
+
     # Subscribe to fission for inheritance
     def on_fission(event):
         decision_engine.inherit_on_fission(
@@ -88,6 +102,29 @@ def main():
         for s in detector.get_active():
             if s.shape_hash:
                 pattern_hasher.register(s.shape_hash, tick, (0, 0))
+
+        # Ecology scan every 50 ticks
+        if tick % 50 == 0:
+            struct_dicts = []
+            for s in detector.get_active():
+                cells = set()
+                for c in world.grid.all_cells:
+                    if c.id in s.cells:
+                        cells.add((c.x, c.y))
+                struct_dicts.append({
+                    "id": s.id, "cells": cells,
+                    "primary_type": 0, "age": s.age,
+                })
+            net = ecology_engine.scan(struct_dicts)
+            comps = sum(1 for e in net.edges if e.relationship == "competition")
+            muts = sum(1 for e in net.edges if e.relationship == "mutualism")
+            remnants_map = {(r.x, r.y): True for r in resource_engine.all_remnants}
+            ecology_data.update({
+                "nodes": len(net.nodes), "edges": len(net.edges),
+                "competition_pairs": comps, "mutualism_pairs": muts,
+                "remnant_count": resource_engine.count,
+                "remnants": remnants_map,
+            })
 
         # Decision stats every 20 ticks
         if tick % 20 == 0:
@@ -186,6 +223,7 @@ def main():
         lineage_data=lineage_data,
         decision_stats=decision_stats,
         life_stats=life_stats,
+        ecology_data=ecology_data,
     )
 
     fps = 15
@@ -197,6 +235,7 @@ def main():
                 renderer._lineage = lineage_data
                 renderer._decision = decision_stats
                 renderer._life = life_stats
+                renderer._ecology = ecology_data
                 renderer.display_tick(live)
                 time.sleep(1.0 / fps)
     except KeyboardInterrupt:
