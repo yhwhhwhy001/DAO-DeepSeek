@@ -10,6 +10,7 @@ class Civilization:
     core_structure_id: str
     born_at: int
     died_at: int | None = None
+    name: str = ""
     member_lineages: list[str] = field(default_factory=list)
     member_structures: list[str] = field(default_factory=list)
     peak_size: int = 0
@@ -41,10 +42,9 @@ class CivilizationEngine:
         self._next_id = 0
 
     def scan(self, ecology_network, symbol_data: dict, tick: int) -> list[Civilization]:
-        if ecology_network is None or ecology_network.number_of_nodes() < 3:
+        if ecology_network is None or ecology_network.number_of_nodes() < 2:
             return []
 
-        # 简单社区检测：连通分量
         try:
             import networkx as nx
             communities = list(nx.connected_components(ecology_network))
@@ -53,29 +53,31 @@ class CivilizationEngine:
 
         new_civs = []
         for community in communities:
-            if len(community) < 3:
+            if len(community) < 2:
                 continue
             lineages = set()
             for node in community:
                 lineage = ecology_network.nodes[node].get("lineage_root", node)
                 lineages.add(lineage)
-            if len(lineages) < 3:
+            if len(lineages) < 2:
                 continue
-            has_mutualism = False
-            for u, v, d in ecology_network.edges(data=True):
-                if u in community and v in community:
-                    if d.get("relationship") == "mutualism":
-                        has_mutualism = True
-                        break
-            if not has_mutualism:
-                continue
-            core = max(community, key=lambda n: ecology_network.degree(n))
+
+            core = max(community, key=lambda n: ecology_network.degree(n) if ecology_network.degree(n) > 0 else 1)
             founder = ecology_network.nodes[core].get("lineage_root", core)
+            # 自动命名：根据 dominant type
+            type_counts = {}
+            for node in community:
+                t = ecology_network.nodes[node].get("type", 0)
+                type_counts[t] = type_counts.get(t, 0) + 1
+            dom_type = max(type_counts, key=type_counts.get) if type_counts else 0
+            type_names = {0: "金", 1: "火", 2: "木", 3: "水"}
+            name = f"{type_names.get(dom_type, '?')}灵·{founder[:6]}"
             civ = Civilization(id=f"civ_{self._next_id}", founder_lineage=founder,
                              core_structure_id=core, born_at=tick,
                              member_lineages=list(lineages),
                              member_structures=list(community),
                              peak_size=len(lineages), peak_tick=tick)
+            civ.name = name
             self._next_id += 1
             new_civs.append(civ)
 

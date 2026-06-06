@@ -245,6 +245,41 @@ class GameSession:
                           "signals": lang_stats["total_signals"],
                           "top_symbol": lang_stats.get("top_symbol", "N/A")}
 
+        # 文明扫描 (每 100 tick)
+        import networkx as nx
+        civ_data = {}
+        if self._tick % 100 == 0:
+            G = nx.Graph()
+            for s in active:
+                G.add_node(s.id, lineage_root=s.id)
+            for i, s1 in enumerate(active):
+                s1_cells = {(c.x, c.y) for c in g.all_cells if c.id in s1.cells}
+                for s2 in list(active)[i+1:]:
+                    s2_cells = {(c.x, c.y) for c in g.all_cells if c.id in s2.cells}
+                    for x, y in s1_cells:
+                        close = False
+                        for dx in (-1,0,1):
+                            for dy in (-1,0,1):
+                                if (x+dx, y+dy) in s2_cells:
+                                    close = True; break
+                            if close: break
+                        if close:
+                            G.add_edge(s1.id, s2.id, relationship='proximity', strength=0.5)
+                            break
+            self.civ_engine.scan(G, {}, self._tick)
+        active_civs = [c for c in self.civ_engine.civilizations if c.status != 'fallen']
+        fallen_civs = [c for c in self.civ_engine.civilizations if c.status == 'fallen']
+        top_civ = max(active_civs, key=lambda c: len(c.member_lineages)) if active_civs else None
+        civ_data = {
+            "active": len(active_civs),
+            "fallen": len(fallen_civs),
+            "top": {"name": top_civ.name, "era": top_civ.era, "size": len(top_civ.member_lineages),
+                    "born": top_civ.born_at, "peak": top_civ.peak_size} if top_civ else None,
+            "timeline": [{"name": c.name, "era": c.era, "size": len(c.member_lineages),
+                          "born": c.born_at, "status": c.status}
+                         for c in sorted(self.civ_engine.civilizations, key=lambda c: c.born_at)[-20:]],
+        }
+
         return {
             "type": "tick",
             "tick": self._tick,
@@ -256,12 +291,12 @@ class GameSession:
                       "stable": self.detector.stable_count,
                       "lifeforms": len(lifeforms)},
             "player": player_data,
-            "beasts": self.beast_engine.get_all_data(),
             "panels": {
                 "entropy": entropy_data,
                 "leaderboard": leaderboard_data,
                 "life": life_data,
                 "cognition": cognition_data,
+                "civilization": civ_data,
             },
         }
 
