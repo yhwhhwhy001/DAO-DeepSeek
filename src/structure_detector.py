@@ -219,10 +219,11 @@ class StructureDetector:
     def _is_stable(self, struct: Structure) -> bool:
         if struct.age < STABILITY_AGE:
             return False
-        if len(struct.size_history) < 2:
+        recent = struct.size_history[-10:]  # sliding window
+        if len(recent) < 2:
             return True
-        mean = sum(struct.size_history) / len(struct.size_history)
+        mean = sum(recent) / len(recent)
         if mean == 0:
             return True
-        variance = sum((s - mean) ** 2 for s in struct.size_history) / len(struct.size_history)
+        variance = sum((s - mean) ** 2 for s in recent) / len(recent)
         return (variance ** 0.5) / mean < STABILITY_CV
