@@ -50,9 +50,9 @@ export function useWebSocket() {
     }
   }, []);
 
-  const pause = () => { console.log('[btn] pause'); wsRef.current?.send(JSON.stringify({ type: 'pause' })); };
-  const resume = () => { console.log('[btn] resume'); wsRef.current?.send(JSON.stringify({ type: 'resume' })); };
-  const setSpeed = (tps: number) => { console.log('[btn] speed', tps); wsRef.current?.send(JSON.stringify({ type: 'set_speed', tps })); };
+  const pause = () => sendMsg({ type: 'pause' });
+  const resume = () => sendMsg({ type: 'resume' });
+  const setSpeed = (tps: number) => sendMsg({ type: 'set_speed', tps });
 
   const sendMsg = useCallback((msg: object) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {

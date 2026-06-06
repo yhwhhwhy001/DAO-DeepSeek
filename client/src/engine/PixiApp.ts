@@ -14,12 +14,18 @@ export class PixiApp {
   _needsRedraw = false;
   playerCellId: string | null = null;
   cameraX = 0; cameraY = 0;
+  _targetCX = 0; _targetCY = 0;
 
   setPlayerCellId(id: string | null) { this.playerCellId = id; }
 
   updateCamera(px: number, py: number, canvasW: number, canvasH: number) {
-    this.cameraX = Math.max(0, Math.min(px * this.step - canvasW / 2, 80 * this.step - canvasW));
-    this.cameraY = Math.max(0, Math.min(py * this.step - canvasH / 2, 40 * this.step - canvasH));
+    this._targetCX = Math.max(0, Math.min(px * this.step - canvasW / 2, 80 * this.step - canvasW));
+    this._targetCY = Math.max(0, Math.min(py * this.step - canvasH / 2, 40 * this.step - canvasH));
+  }
+
+  _lerpCamera() {
+    this.cameraX += (this._targetCX - this.cameraX) * 0.15;
+    this.cameraY += (this._targetCY - this.cameraY) * 0.15;
   }
 
   constructor(canvas: HTMLCanvasElement, width: number, height: number) {
@@ -37,8 +43,9 @@ export class PixiApp {
       this.drawLayer = new Graphics();
       this.app.stage.addChild(this.gridLayer, this.drawLayer);
       this.drawGrid(width, height);
-      this.app.ticker.maxFPS = 30;  // 限制 30fps
+      this.app.ticker.maxFPS = 30;
       this.app.ticker.add(() => {
+        this._lerpCamera();
         if (this._needsRedraw && this._lastGridData) {
           this._drawCells(this._lastGridData);
           this._needsRedraw = false;
