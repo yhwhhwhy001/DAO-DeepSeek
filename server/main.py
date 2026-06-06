@@ -217,9 +217,23 @@ async def _run_loop(ws: WebSocket):
     while True:
         try:
             if session.running and session.world:
-                state = session.step()
-                await ws.send_json(state)
-                await asyncio.sleep(1 / session.tps)
+                # tps=0 → 极速模式，批量跑 50 tick 后发送一次
+                if session.tps == 0:
+                    batch = 50
+                    state = None
+                    for _ in range(batch):
+                        state = session.step()
+                    if state:
+                        await ws.send_json(state)
+                elif session.tps >= 1000:
+                    # 高速模式，每 tick 计算但减少发送频率
+                    state = session.step()
+                    if session._tick % max(1, session.tps // 30) == 0:
+                        await ws.send_json(state)
+                else:
+                    state = session.step()
+                    await ws.send_json(state)
+                    await asyncio.sleep(1 / session.tps)
             else:
                 await asyncio.sleep(0.1)
         except Exception:
