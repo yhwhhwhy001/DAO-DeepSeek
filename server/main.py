@@ -159,18 +159,17 @@ class GameSession:
         # 决策阶段 (跳过玩家细胞)
         exclude = {self.player.cell_id} if self.player else set()
         self.decision.step_all(self.world.grid, self.world.bus, exclude_ids=exclude)
-        # 防止物理规则杀死玩家：保存位置+灵力，step后恢复
-        saved_x, saved_y, saved_energy = (pc.x, pc.y, pc.energy) if pc else (0, 0, 0)
+        # 物理阶段：临时移除玩家，防止 fission/decay 影响
+        saved_pc = None
+        if pc:
+            saved_pc = pc
+            self.world.grid.remove(pc.x, pc.y)
         self.world.time_engine.step()
-        if self.player:
-            pc = self.world.grid.get_by_id(self.player.cell_id)
-            if not pc:
-                # 物理规则移除了玩家细胞——重建
-                from src.cell import Cell
-                pc = Cell(x=saved_x, y=saved_y, type=0, energy=saved_energy, id=self.player.cell_id)
-                self.world.grid.place(pc)
-            else:
-                pc.energy = max(pc.energy, saved_energy)
+        if saved_pc:
+            # 如果位置被占（injection生成了新cell），先移除
+            if not self.world.grid.is_empty(saved_pc.x, saved_pc.y):
+                self.world.grid.remove(saved_pc.x, saved_pc.y)
+            self.world.grid.place(saved_pc)
         self._tick += 1
 
         g = self.world.grid
