@@ -1,7 +1,6 @@
 import { Application, Graphics } from 'pixi.js';
 
 const TYPE_COLORS = [0xffffff, 0xff4444, 0x44ff44, 0x4488ff];
-const TYPE_COLORS_DARK = [0xaaaaaa, 0x882222, 0x228822, 0x224488];
 const TYPE_COLORS_GLOW = [0xffffff, 0xff8888, 0x88ff88, 0x88aaff];
 
 export class PixiApp {
@@ -121,7 +120,6 @@ export class PixiApp {
       const cx = x * this.step + this.step / 2 - this.cameraX;
       const cy = y * this.step + this.step / 2 - this.cameraY;
       const baseColor = TYPE_COLORS[type] ?? 0xffffff;
-      const darkColor = TYPE_COLORS_DARK[type] ?? 0x888888;
       const glowColor = TYPE_COLORS_GLOW[type] ?? 0xffffff;
       const size = Math.min(5 + energy * 0.15, 10);
       const r = isPlayer ? 10 : size;
