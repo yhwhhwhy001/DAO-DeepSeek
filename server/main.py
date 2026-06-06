@@ -97,6 +97,8 @@ class GameSession:
         self.world.bus.subscribe(EventType.CELL_DESTROYED, on_destroy)
 
     def step(self) -> dict:
+        # 决策阶段
+        self.decision.step_all(self.world.grid, self.world.bus)
         self.world.time_engine.step()
         self._tick += 1
 
@@ -110,6 +112,25 @@ class GameSession:
         if self.resource:
             for r in self.resource.all_remnants:
                 remnants.append({"x": r.x, "y": r.y, "energy": round(r.energy, 2), "type": r.type})
+
+        # 每 50 tick 更新符号和知识
+        if self._tick % 50 == 0:
+            q_data = []
+            for dc in self.decision.cells.values():
+                for sk, actions in dc.utility._q_table.items():
+                    for a, v in actions.items():
+                        if abs(v) > 0.1:
+                            q_data.append((sk, a, v))
+            symbols = self.symbol_engine.scan(q_data)
+            transitions = []
+            for dc in self.decision.cells.values():
+                keys = set(dc.utility._q_table.keys())
+                for s in symbols:
+                    if s.state_keys & keys:
+                        for s2 in symbols:
+                            if s.id != s2.id and s2.state_keys & keys:
+                                transitions.append((s.id, s2.id))
+            self.knowledge_engine.scan(transitions, {})
 
         entropy_data = None
         if self.entropy.current_snapshot:
