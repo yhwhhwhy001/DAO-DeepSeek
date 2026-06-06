@@ -1,4 +1,4 @@
-import { Application, Graphics, Container } from 'pixi.js';
+import { Application, Graphics } from 'pixi.js';
 
 const TYPE_COLORS = [0xffffff, 0xff4444, 0x44ff44, 0x4488ff];
 
